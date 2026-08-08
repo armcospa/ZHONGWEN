@@ -50,6 +50,12 @@ def build_model(fields: list, target_lang: str = DEFAULT_TARGET_LANG) -> genanki
         MODEL_ID,
         name,
         fields=[{"name": name} for name in fields],
+        # Order matters: cards.ord (0-4) is this list's index, used to label
+        # reviews by card type in export_stats.CARD_TYPE_BY_ORD without
+        # depending on genanki. Only ever APPEND new templates here -- never
+        # reorder or insert in the middle, or existing cards' `ord` (and
+        # their whole review history/scheduling) would silently point at the
+        # wrong template next time this deck is rebuilt and reimported.
         templates=[
             {
                 "name": "Hanzi -> Significado",
@@ -70,6 +76,11 @@ def build_model(fields: list, target_lang: str = DEFAULT_TARGET_LANG) -> genanki
                 "name": "Escribir Hanzi",
                 "qfmt": _read(TEMPLATE_DIR / "hanzi_writing" / "front.html", target_lang),
                 "afmt": _read(TEMPLATE_DIR / "hanzi_writing" / "back.html", target_lang),
+            },
+            {
+                "name": "Pinyin -> Significado",
+                "qfmt": _read(TEMPLATE_DIR / "pinyin_to_meaning" / "front.html", target_lang),
+                "afmt": _read(TEMPLATE_DIR / "pinyin_to_meaning" / "back.html", target_lang),
             },
         ],
         css=css,

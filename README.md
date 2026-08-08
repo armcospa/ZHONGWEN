@@ -6,16 +6,17 @@ Pensado para compartir: si solo quieres estudiar, no necesitas instalar nada —
 
 ## Qué hace este repositorio
 
-Por cada palabra china genera **4 tarjetas**:
+Por cada palabra china genera **5 tarjetas**:
 
 | Tarjeta | Pregunta | Respuesta | Qué entrena |
 |---|---|---|---|
 | Hanzi → Significado | Carácter | Significado (ES, con EN de apoyo) | Lectura |
 | Significado → Hanzi | Significado (ES, con EN de apoyo) | Carácter + pinyin | Producción |
+| Pinyin → Significado | Pinyin con tonos (sin el carácter) | Carácter + significado | Comprensión oral/lectora del pinyin |
 | Escribir Pinyin | Carácter | Escribes el pinyin con tonos; Anki lo compara letra a letra | Ortografía del pinyin |
 | Escribir Hanzi | Pinyin + significado | Dibujas el carácter trazo a trazo, con [HanziWriter](https://hanziwriter.org/) validando forma, dirección y orden de cada trazo | Escritura a mano |
 
-Además de esas 4 preguntas, cada tarjeta muestra pinyin con tonos, caracteres coloreados por tono, hasta 3 sinónimos y una definición corta en chino. El botón **"Unhide"** revela las secciones ocultas (pinyin y coloreado), para poder intentar leer o escribir antes de comprobar la respuesta.
+Además de esas 5 preguntas, cada tarjeta muestra pinyin con tonos, caracteres coloreados por tono, hasta 3 sinónimos y una definición corta en chino. El botón **"Unhide"** revela las secciones ocultas (pinyin y coloreado), para poder intentar leer o escribir antes de comprobar la respuesta.
 
 ### Ejemplos
 
@@ -50,7 +51,7 @@ Hay un cuarto script, **[`export_stats.py`](src/zhongwen_anki/export_stats.py)**
 ```
 zhongwen-anki/
 ├── src/zhongwen_anki/          # Paquete Python instalable (los 4 scripts anteriores)
-├── card_template/               # HTML/CSS de las 4 tarjetas + librería HanziWriter
+├── card_template/               # HTML/CSS de las 5 tarjetas + librería HanziWriter
 ├── data/
 │   ├── hsk1/input.tsv            # Vocabulario HSK1 (301 palabras, completo)
 │   ├── hsk2/, hsk3/               # Preparadas para rellenar (ver README de cada carpeta)

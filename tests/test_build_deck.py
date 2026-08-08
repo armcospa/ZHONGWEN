@@ -9,6 +9,7 @@ EXPECTED_TEMPLATE_NAMES = [
     "Significado -> Hanzi",
     "Escribir Pinyin",
     "Escribir Hanzi",
+    "Pinyin -> Significado",
 ]
 
 
@@ -17,7 +18,7 @@ def test_build_model_has_one_field_per_output_column():
     assert [f["name"] for f in model.fields] == OUTPUT_COLUMNS
 
 
-def test_build_model_has_the_four_expected_templates():
+def test_build_model_has_the_five_expected_templates():
     model = build_model(OUTPUT_COLUMNS)
     assert [t["name"] for t in model.templates] == EXPECTED_TEMPLATE_NAMES
     for template in model.templates:

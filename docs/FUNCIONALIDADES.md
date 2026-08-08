@@ -50,7 +50,7 @@ vocabulario ya completo en `data/hsk1/`.
 - Todo corre en un entorno virtual local (`.venv/`), sin tocar el Python
   global. Instalación: `pip install -e ".[deck,test]"`.
 
-### 1.3 Tipo de nota "Chino - HSK (ES/EN)" — 4 tarjetas por palabra
+### 1.3 Tipo de nota "Chino - HSK (ES/EN)" — 5 tarjetas por palabra
 
 El tipo de nota es **uno solo, compartido por todos los niveles** (HSK1,
 HSK2, HSK3...); lo que distingue a cada nivel es el mazo (`Chino - HSK1
@@ -60,8 +60,14 @@ de cada nota, ambos asignados por `zhongwen-anki-build-deck --level`.
 |---|---|---|---|
 | Hanzi → Significado | Carácter | Significado (ES, con EN de apoyo) | Lectura |
 | Significado → Hanzi | Significado (ES, con EN de apoyo) | Carácter + pinyin | Producción |
+| Pinyin → Significado | Pinyin con tonos (carácter oculto) | Carácter + significado | Reconocer la palabra solo por su pinyin, sin ver el hanzi |
 | Escribir Pinyin | Carácter | Escribes el pinyin con tonos, Anki compara letra a letra | Ortografía del pinyin |
 | Escribir Hanzi | Pinyin + significado | Dibujas el carácter trazo a trazo, evaluado automáticamente | Escritura |
+
+`Pinyin -> Significado` es la plantilla más nueva (`card_template/pinyin_to_meaning/`,
+`ord=4` en `build_deck.build_model` -- añadida al *final* de la lista de
+plantillas a propósito, para no reordenar los `ord` 0-3 ya existentes y no
+romper el progreso/historial de tarjetas ya importadas).
 
 La tarjeta de escritura de hanzi usa **[HanziWriter](https://hanziwriter.org/)**
 (librería JS de código abierto) con los datos de trazos oficiales de cada uno
@@ -102,7 +108,7 @@ AnkiMobile.
 - **Análisis de tu propio aprendizaje**: con `export_stats.py` tienes acceso
   a cada repaso individual (acierto/fallo, tiempo empleado, facilidad,
   intervalo). Se puede usar para ver qué palabras cuestan más, cómo evoluciona
-  tu ritmo de aciertos, o comparar las 4 tarjetas entre sí (¿fallas más en
+  tu ritmo de aciertos, o comparar las 5 tarjetas entre sí (¿fallas más en
   pinyin que en escritura?).
 - **Practicar habilidades por separado sin perder el hilo**: mazos filtrados
   por tipo de tarjeta, por etiqueta (`tag:HSK1`), o por "leeches" (palabras
@@ -125,7 +131,7 @@ AnkiMobile.
 4. Ajusta el límite de tarjetas si quieres (por defecto coge todas las que tocan repasar).
 5. **Build**. Se crea un mazo temporal con solo esas tarjetas, sin duplicar nada — tu progreso real sigue en el mazo original y al vaciar el filtrado (`Empty`) las tarjetas vuelven a su sitio.
 
-Puedes hacer lo mismo con `card:"Hanzi -> Significado"` o `card:"Significado -> Hanzi"` para las otras dos.
+Puedes hacer lo mismo con `card:"Hanzi -> Significado"`, `card:"Significado -> Hanzi"`, `card:"Pinyin -> Significado"` o `card:"Escribir Hanzi"` para las otras cuatro.
 
 **Solución de problemas — "No se encontraron tarjetas coincidentes":**
 - Lo más probable es que tu colección de Anki todavía no tenga importada la versión del mazo que incluye esa plantilla en concreto (p. ej. "Escribir Pinyin" y "Escribir Hanzi" se añadieron en pasos posteriores del proyecto) — reimporta el `.apkg` más reciente de [`decks/`](../decks/) primero.
