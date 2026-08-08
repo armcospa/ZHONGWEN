@@ -1,7 +1,7 @@
 <div class=mainCharacters style="visibility: hidden">{{Traditional}}</div>
 <div class=secondaryCharacters style="visibility: hidden">{{Simplified}}</div>
 
-<span class=pinyin id='startPinyin'>{{Pinyin}}&nbsp<br></span>
+<span class=pinyin style="visibility: hidden">{{Pinyin}}&nbsp<br></span>
 <div class=meaning>{{MeaningES}} <span class=en-secondary>({{Meaning}})</span>&nbsp<br></div>
 <div style="line-height:70%;"><br></div>
 
@@ -20,8 +20,3 @@
 <div style="line-height:70%;"><br></div>
 
 <hr>
-
-<script>
-	start = document.getElementById('startPinyin');
-	start.innerHTML = start.innerHTML.charAt(0);
-</script>
