@@ -1,3 +1,17 @@
+# IDE / environment
 .idea
-/data/
-/zhongwen_anki.egg-info/*
+.venv/
+
+# Python build artifacts
+__pycache__/
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+
+# Personal, machine-specific Anki review export (not source data)
+data/anki_reviews.csv
+
+# Generated intermediate files: regenerate with `zhongwen-anki`
+# (data/<level>/input.tsv is the curated source and stays tracked)
+data/*/output.tsv

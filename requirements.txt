@@ -1,2 +1,6 @@
-pinyin
-pandas
+# Runtime dependencies for `zhongwen-anki` (the enrich step).
+# For deck building and running the test suite, install with extras instead:
+#   pip install -e ".[deck,test]"
+jieba==0.42.1
+pypinyin==0.55.0
+pandas==2.2.3
