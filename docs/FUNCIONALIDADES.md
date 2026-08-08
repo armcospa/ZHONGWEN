@@ -46,7 +46,17 @@ vocabulario ya completo en `data/hsk1/`.
   tipo de nota es el mismo para todos los niveles, así que sus datos de
   trazos se combinan en una sola pasada.
 - `zhongwen-anki-export-stats`: exporta el historial de repasos de Anki
-  (`collection.anki2` → `revlog`) a un CSV limpio para analizarlo fuera de Anki.
+  (`collection.anki2` → `revlog`) a un CSV limpio para analizarlo fuera de Anki,
+  incluyendo por qué tipo de tarjeta fue cada repaso (`card_type`: "Hanzi ->
+  Significado", "Significado -> Hanzi", "Escribir Pinyin", "Escribir Hanzi").
+- `zhongwen-anki-analyze-stats`: lee ese CSV y genera un informe HTML
+  autocontenido (gráficos incrustados como PNG en base64, sin dependencias
+  externas ni conexión a internet) con precisión por tipo de tarjeta y por
+  nivel, tendencia de aciertos (media móvil de 7 días), retención por
+  intervalo desde el repaso anterior, precisión por día de la semana, y una
+  tabla de las palabras con peor ratio de aciertos (candidatas a repaso
+  dirigido). Requiere `pip install -e ".[analyze]"` (o `.[test]`, que ya lo
+  incluye).
 - Todo corre en un entorno virtual local (`.venv/`), sin tocar el Python
   global. Instalación: `pip install -e ".[deck,test]"`.
 
@@ -105,11 +115,13 @@ AnkiMobile.
   `zhongwen-anki-build-hanzi-templates` (añade los caracteres nuevos) y
   `zhongwen-anki-build-deck --level HSK2`. Para HSK4-6 hace falta además
   añadir una entrada en `DECK_IDS` dentro de `build_deck.py`.
-- **Análisis de tu propio aprendizaje**: con `export_stats.py` tienes acceso
-  a cada repaso individual (acierto/fallo, tiempo empleado, facilidad,
-  intervalo). Se puede usar para ver qué palabras cuestan más, cómo evoluciona
-  tu ritmo de aciertos, o comparar las 5 tarjetas entre sí (¿fallas más en
-  pinyin que en escritura?).
+- **Análisis de tu propio aprendizaje**: `export_stats.py` (estable) da acceso
+  a cada repaso individual (acierto/fallo, tipo de tarjeta de entre las 5,
+  tiempo empleado, facilidad, intervalo). `analyze_stats.py` (🚧 WIP, ver
+  §1.2) convierte eso en un informe HTML: qué palabras cuestan más, cómo
+  evoluciona tu ritmo de aciertos, si fallas más en pinyin que en escritura,
+  en qué días de la semana rindes mejor, y si Anki te está espaciando los
+  repasos demasiado agresivo (precisión que cae en los intervalos largos).
 - **Practicar habilidades por separado sin perder el hilo**: mazos filtrados
   por tipo de tarjeta, por etiqueta (`tag:HSK1`), o por "leeches" (palabras
   que fallas repetidamente — Anki las etiqueta solas).
@@ -172,7 +184,22 @@ Anki no tiene un botón nativo de "exportar CSV" en la pantalla de Stats, pero *
    revlog.to_csv("mis_repasos.csv", index=False)
    ```
    La tabla `revlog` tiene **una fila por cada repaso que has hecho** (timestamp, si acertaste/fallaste, tiempo empleado, intervalo, etc.) — es la fuente de datos más completa que hay, mejor que cualquier export de la interfaz.
-4. Alternativa ya hecha en este repo: `zhongwen-anki-export-stats` hace exactamente esto (con detección automática del perfil, nombres de columna legibles y filtro opcional por mazo). Ver sección 1.2 más arriba.
+4. Alternativa ya hecha en este repo: `zhongwen-anki-export-stats` hace exactamente esto (con detección automática del perfil, nombres de columna legibles y filtro opcional por mazo), y `zhongwen-anki-analyze-stats` convierte ese CSV en un informe HTML con gráficos. Ver sección 1.2 más arriba.
+
+### 3.5 Flujo si estudias sobre todo en AnkiDroid
+
+Ambos comandos leen `collection.anki2`, que vive en el ordenador con Anki
+Desktop -- no en el móvil. El flujo recomendado si la mayoría de tu estudio es
+en AnkiDroid:
+
+1. En AnkiDroid: sincroniza (icono de sincronización) para subir tus repasos a AnkiWeb.
+2. En el ordenador con Anki Desktop: sincroniza también (mismo icono, o `Y`), para bajar esos repasos al `collection.anki2` local.
+3. `zhongwen-anki-export-stats` (regenera `data/anki_reviews.csv` con todo lo nuevo).
+4. `zhongwen-anki-analyze-stats` (regenera `data/report.html`).
+
+Como los repasos se acumulan (nunca se borran salvo que hagas `Forget`), es
+seguro repetir este flujo cuando quieras -- cada vez parte del historial
+completo, no incremental.
 
 ## 4. Mejoras futuras a considerar
 

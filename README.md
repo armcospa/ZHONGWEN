@@ -96,6 +96,7 @@ Esto instala la librería y registra los siguientes comandos en tu entorno virtu
 | `zhongwen-anki-build-deck` | Empaqueta un `output.tsv` en un `.apkg` |
 | `zhongwen-anki-build-hanzi-templates` | Regenera las plantillas de escritura de hanzi |
 | `zhongwen-anki-export-stats` | Exporta tu historial de repasos de Anki a CSV |
+| `zhongwen-anki-analyze-stats` | 🚧 WIP: genera un informe HTML (gráficos + tablas) a partir de ese CSV |
 
 ### Paso 1: Preparar la lista de palabras
 
@@ -241,9 +242,12 @@ Complementos recomendados: **[Auto Ease Factor](https://ankiweb.net/shared/info/
 
 ```bash
 zhongwen-anki-export-stats --deck "HSK1" -o data/anki_reviews.csv
+zhongwen-anki-analyze-stats -i data/anki_reviews.csv -o data/report.html
 ```
 
-Exporta cada repaso individual (acierto/fallo, tiempo empleado, intervalo) directamente desde `collection.anki2`, para analizarlo fuera de Anki (por nivel, por tipo de tarjeta, por palabra...). Ver [`docs/FUNCIONALIDADES.md`](docs/FUNCIONALIDADES.md) para más detalle y trucos de uso dentro de Anki (mazos filtrados, reordenar tarjetas, resetear historial...).
+El primer comando exporta cada repaso individual (acierto/fallo, tipo de tarjeta, etiquetas, tiempo empleado, intervalo) directamente desde `collection.anki2`; es estable y ya tiene tests contra datos reales. El segundo (requiere `pip install -e ".[analyze]"`, o ya viene incluido en `[test]`) genera un informe HTML autocontenido con precisión por tipo de tarjeta, tendencia de aciertos, retención por intervalo, precisión por día de la semana y las palabras más difíciles — ábrelo con cualquier navegador, sin conexión a internet. **Es trabajo en curso** (vive en `zhongwen_anki.wip`, ver [`docs/FUNCIONALIDADES.md`](docs/FUNCIONALIDADES.md)): construido y probado con datos sintéticos, todavía no contrastado contra un historial de repasos real.
+
+Si estudias sobre todo en AnkiDroid: sincroniza AnkiDroid → AnkiWeb → Anki Desktop antes de re-exportar, porque estos dos comandos leen el `collection.anki2` local. Ver [`docs/FUNCIONALIDADES.md`](docs/FUNCIONALIDADES.md) para más detalle y trucos de uso dentro de Anki (mazos filtrados, reordenar tarjetas, resetear historial...).
 
 ## Tests
 

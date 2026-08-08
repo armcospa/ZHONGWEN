@@ -15,6 +15,17 @@ Notes on the Anki schema (kept raw on purpose, for faithful downstream analysis)
     - `ease_factor_percent`: 250 means the interval multiplies by 2.5 on a
       correct review.
     - `is_correct` is a simple heuristic: ease >= 2 (i.e. not "Again").
+    - `tags` reflects the note's tags *right now* (e.g. "leech", "HSK1"), not
+      at the time of that historical review -- Anki doesn't keep a per-review
+      snapshot of tags, so a tag added/removed later shows up on every row.
+    - `current_filtered_deck` is populated only if the card is *still*
+      sitting inside a filtered deck at export time; once a filtered deck is
+      emptied there is no way to recover which one a past review happened
+      in -- Anki's revlog does not record deck membership per review, only
+      `review_type == "cram/filtered"` (whether it was a cram-type review at
+      all). `card_type` (see CARD_TYPE_BY_ORD below) is the durable
+      equivalent for "which skill was this": unlike a filtered deck, a
+      card's template never changes over its lifetime.
 """
 import argparse
 import csv
@@ -27,6 +38,19 @@ from typing import Optional
 
 EASE_LABELS = {1: "Again", 2: "Hard", 3: "Good", 4: "Easy"}
 REVIEW_TYPE_LABELS = {0: "learning", 1: "review", 2: "relearning", 3: "cram/filtered", 4: "manual"}
+
+# cards.ord (0-3) -> template name. Hardcoded rather than read from the
+# collection's notetype tables because this project only ever writes one
+# shared model (see build_deck.build_model's `templates=[...]`, which must be
+# kept in sync with this) -- reading it back from Anki's own schema would
+# have to handle several incompatible schema versions for no real benefit.
+CARD_TYPE_BY_ORD = {
+    0: "Hanzi -> Significado",
+    1: "Significado -> Hanzi",
+    2: "Escribir Pinyin",
+    3: "Escribir Hanzi",
+    4: "Pinyin -> Significado",
+}
 
 
 def _default_collection_candidates():
@@ -78,7 +102,7 @@ def export(collection_path: Path, output_path: Path, deck_filter: Optional[str])
                revlog.ivl AS interval, revlog.lastIvl AS last_interval,
                revlog.factor AS factor, revlog.time AS time_ms, revlog.type AS review_type,
                cards.did AS deck_id, cards.odid AS orig_deck_id, cards.nid AS note_id,
-               notes.flds AS flds
+               cards.ord AS card_ord, notes.flds AS flds, notes.tags AS tags
         FROM revlog
         JOIN cards ON cards.id = revlog.cid
         JOIN notes ON notes.id = cards.nid
@@ -91,7 +115,8 @@ def export(collection_path: Path, output_path: Path, deck_filter: Optional[str])
     with output_path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow([
-            "review_datetime", "deck", "note_id", "card_id", "word",
+            "review_datetime", "deck", "current_filtered_deck", "note_id", "card_id",
+            "word", "card_type", "tags",
             "ease", "ease_label", "is_correct",
             "interval", "last_interval", "ease_factor_percent",
             "time_seconds", "review_type",
@@ -101,18 +126,25 @@ def export(collection_path: Path, output_path: Path, deck_filter: Optional[str])
             # points at that temporary deck and the real ("home") deck is in
             # `odid` instead. Prefer the home deck so stats aren't attributed
             # to a filtered deck that may not even exist anymore by the time
-            # this export runs.
+            # this export runs; keep the filtered deck too (see module
+            # docstring for why this is only ever a "currently" snapshot).
             home_deck_id = row["orig_deck_id"] or row["deck_id"]
             deck_name = decks.get(home_deck_id, "")
             if deck_filter and deck_filter.lower() not in deck_name.lower():
                 continue
+            filtered_deck_name = decks.get(row["deck_id"], "") if row["orig_deck_id"] else ""
             word = row["flds"].split("\x1f")[0]
+            card_type = CARD_TYPE_BY_ORD.get(row["card_ord"], f"(ord {row['card_ord']})")
+            tags = row["tags"].strip()
             writer.writerow([
                 datetime.fromtimestamp(row["review_epoch_ms"] / 1000).isoformat(sep=" ", timespec="seconds"),
                 deck_name,
+                filtered_deck_name,
                 row["note_id"],
                 row["card_id"],
                 word,
+                card_type,
+                tags,
                 row["ease"],
                 EASE_LABELS.get(row["ease"], row["ease"]),
                 int(row["ease"] >= 2),
