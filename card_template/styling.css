@@ -43,6 +43,14 @@ mark.tone-5 {color:#9e9e9e; background: none;}
 .synonymsColored{font-family: SimSun; font-size:20px; text-align:left; color:grey; display: none}
 
 .bottomcontrols{bottom: 13px; position: fixed; left: 0; right: 0; margin-left: auto; margin-right: auto; width:380px;border: 5px solid #3c3c3c; background-color: #3c3c3c !Important;overflow:hidden;text-align: center; color: lightgrey}
+
+/* Filtered-deck (chinese_to_english / pinyin_to_meaning / english_to_chinese)
+   headword-only fronts and primary/secondary backs. New classes only --
+   existing rules above are left untouched so hanzi_writing and
+   pinyin_writing keep their current look. */
+.center {text-align: center;}
+.meaningPrimary {font-family: Georgia; font-size: 22px;}
+.pinyinPrimary {font-family: Gentium Plus; font-size: 40px; color: #FFAAFF; word-break: break-all;}
 .controlPleco{font-family: Georgia; font-size: 14px;  display:inline-block; margin-right:0px;}
 .controlSoundSentence{font-family: Georgia; font-size: 14px;  display:inline-block; margin-right:0px; display:inline-block;width:40px;border: 0px solid #000; text-align: center}
 .controlSoundWord{font-family: Georgia; font-size: 14px;  display:inline-block; margin-right:0px;display:inline-block;width:40px;border: 0px solid #000; text-align: center}
