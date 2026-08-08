@@ -3,14 +3,15 @@
 <div class=secondaryCharactersColored>{{SimplifiedColored}}&nbsp<br></div>
 
 <div class=pinyin>{{Pinyin}}&nbsp<br></div>
-<div class=meaning>{{Meaning}}&nbsp<br></div>
+<div class=meaning>{{MeaningES}} <span class=en-secondary>({{Meaning}})</span>&nbsp<br></div>
 
 <div style="line-height:70%;"><br></div>
 
 <hr>
 
-<div class=synonyms>{{Synonyms}}</div>
+<div class=synonyms>{{SynonymsES}}</div>
 <div class=synonymsColored>{{SynonymsColored}}</div>
+<div class=en-secondary>{{Synonyms}}</div>
 
 <hr>
 
@@ -18,7 +19,7 @@
 <div class=dictionaryColored>{{DictionarySimplifiedColored}}&nbsp<br></div>
 <div style="line-height:20%;"><br></div>
 <div class=dictionaryPinyinHidden>{{DictionaryPinyin}}&nbsp<br></div>
-<div class=dictionaryMeaning>{{DictionaryMeaning}}&nbsp<br></div>
+<div class=dictionaryMeaning>{{DictionaryMeaningES}} <span class=en-secondary>({{DictionaryMeaning}})</span>&nbsp<br></div>
 <div style="line-height:70%;"><br></div>
 
 
@@ -28,7 +29,7 @@
 <div class=sentenceColored>{{SentenceSimplifiedColored}}&nbsp<br></div>
 <div style="line-height:20%;"><br></div>
 <div class=sentencePinyinHidden>{{SentencePinyin}}&nbsp<br></div>
-<div class=sentenceMeaning>{{SentenceMeaning}}&nbsp<br></div>
+<div class=sentenceMeaning>{{SentenceMeaningES}} <span class=en-secondary>({{SentenceMeaning}})</span>&nbsp<br></div>
 <div style="line-height:70%;"><br></div>
 
 
@@ -38,11 +39,16 @@
 <br>
 
 <div class=bottomcontrols>
+    <!-- Pleco lookup buttons, disabled by default: they only work if the Pleco
+         Chinese dictionary app is installed on the device. Uncomment to re-enable.
     <div class=controlPleco><a href="plecoapi://x-callback-url/s?q={{Synonyms}}">Synonyms&nbsp</a></div>
     <div class=controlPleco><a href="plecoapi://x-callback-url/s?q={{DictionarySimplified}}">Dictionary&nbsp</a></div>
+    -->
     <div class=controlHide onclick="toggleVisibility('sentencePinyinHidden');toggleVisibility('dictionaryPinyinHidden');toggleDisplay('sentence');toggleDisplay('sentenceColored');toggleDisplay('synonyms');toggleDisplay('synonymsColored');toggleDisplay('dictionary');toggleDisplay('dictionaryColored')">&nbsp&nbspUnhide&nbsp</div>
+    <!--
     <div class=controlPleco><a href="plecoapi://x-callback-url/s?q={{Simplified}}&mode=df&hw={{Simplified}}&py={{Pinyin}}&sec=dict&x-source=AnkiDroid">&nbsp&nbspWord&nbsp</a></div>
     <div class=controlPleco><a href="plecoapi://x-callback-url/s?q={{SentenceSimplified}}">&nbspSentence</a></div>
+    -->
 
 </div>
 
