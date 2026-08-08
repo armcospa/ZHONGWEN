@@ -1,0 +1,79 @@
+<div class="meaningPrimary center">{{MeaningES}} <span class=en-secondary>({{Meaning}})</span>&nbsp<br></div>
+
+<div style="line-height:70%;"><br></div>
+
+<hr>
+
+<div class="pinyin center">{{Pinyin}}&nbsp<br></div>
+<div class="secondaryCharacters center">{{Simplified}}&nbsp<br></div>
+<div class="secondaryCharactersColored center">{{SimplifiedColored}}&nbsp<br></div>
+
+<hr>
+
+<div class=synonyms>{{SynonymsES}}</div>
+<div class=synonymsColored>{{SynonymsColored}}</div>
+<div class=en-secondary>{{Synonyms}}</div>
+
+<hr>
+
+<div class=dictionary>{{DictionarySimplified}}&nbsp<br></div>
+<div class=dictionaryColored>{{DictionarySimplifiedColored}}&nbsp<br></div>
+<div style="line-height:20%;"><br></div>
+<div class=dictionaryPinyinHidden>{{DictionaryPinyin}}&nbsp<br></div>
+<div class=dictionaryMeaning>{{DictionaryMeaningES}} <span class=en-secondary>({{DictionaryMeaning}})</span>&nbsp<br></div>
+<div style="line-height:70%;"><br></div>
+
+
+<hr>
+
+<div class=sentence>{{SentenceSimplified}}&nbsp<br></div>
+<div class=sentenceColored>{{SentenceSimplifiedColored}}&nbsp<br></div>
+<div style="line-height:20%;"><br></div>
+<div class=sentencePinyinHidden>{{SentencePinyin}}&nbsp<br></div>
+<div class=sentenceMeaning>{{SentenceMeaningES}} <span class=en-secondary>({{SentenceMeaning}})</span>&nbsp<br></div>
+<div style="line-height:70%;"><br></div>
+
+
+<br>
+<br>
+<br>
+<br>
+
+
+<div class=bottomcontrols>
+    <!-- Pleco lookup buttons, disabled by default: they only work if the Pleco
+         Chinese dictionary app is installed on the device. Uncomment to re-enable.
+    <div class=controlPleco><a href="plecoapi://x-callback-url/s?q={{Synonyms}}">Synonyms&nbsp</a></div>
+    <div class=controlPleco><a href="plecoapi://x-callback-url/s?q={{DictionarySimplified}}">Dictionary&nbsp</a></div>
+    -->
+    <div class=controlHide onclick="toggleVisibility('sentencePinyinHidden');toggleVisibility('dictionaryPinyinHidden');toggleDisplay('sentence');toggleDisplay('sentenceColored');toggleDisplay('synonyms');toggleDisplay('synonymsColored');toggleDisplay('dictionary');toggleDisplay('dictionaryColored')">&nbsp&nbspUnhide&nbsp</div>
+    <!--
+    <div class=controlPleco><a href="plecoapi://x-callback-url/s?q={{Simplified}}&mode=df&hw={{Simplified}}&py={{Pinyin}}&sec=dict&x-source=AnkiDroid">&nbspWord&nbsp</a></div>
+    <div class=controlPleco><a href="plecoapi://x-callback-url/s?q={{SentenceSimplified}}">&nbspSentence</a></div>
+    -->
+</div>
+
+
+<script>
+	function toggleVisibility(className) {
+		var elements = document.getElementsByClassName(className);
+		for (var i = 0; i < elements.length; i++) {
+			if (window.getComputedStyle(elements[i]).visibility === "visible") {
+				elements[i].style.visibility = "hidden";
+			} else {
+				elements[i].style.visibility = "visible";
+			}
+		}
+	}
+
+	function toggleDisplay(className) {
+		var elements = document.getElementsByClassName(className);
+		for (var i = 0; i < elements.length; i++) {
+			if (window.getComputedStyle(elements[i]).display === 'block') {
+				elements[i].style.display = 'none';
+			} else {
+				elements[i].style.display = 'block';
+			}
+		}
+	}
+</script>

@@ -60,7 +60,7 @@ vocabulario ya completo en `data/hsk1/`.
 - Todo corre en un entorno virtual local (`.venv/`), sin tocar el Python
   global. Instalación: `pip install -e ".[deck,test]"`.
 
-### 1.3 Tipo de nota "Chino - HSK (ES/EN)" — 5 tarjetas por palabra
+### 1.3 Tipo de nota "Chino - HSK (ES/EN)" — 6 tarjetas por palabra
 
 El tipo de nota es **uno solo, compartido por todos los niveles** (HSK1,
 HSK2, HSK3...); lo que distingue a cada nivel es el mazo (`Chino - HSK1
@@ -71,13 +71,16 @@ de cada nota, ambos asignados por `zhongwen-anki-build-deck --level`.
 | Hanzi → Significado | Carácter | Significado (ES, con EN de apoyo) | Lectura |
 | Significado → Hanzi | Significado (ES, con EN de apoyo) | Carácter + pinyin | Producción |
 | Pinyin → Significado | Pinyin con tonos (carácter oculto) | Carácter + significado | Reconocer la palabra solo por su pinyin, sin ver el hanzi |
+| Significado → Pinyin | Significado (ES, con EN de apoyo) | Pinyin con tonos + carácter | Recordar cómo se pronuncia una palabra solo a partir de su significado, sin verla escrita |
 | Escribir Pinyin | Carácter | Escribes el pinyin con tonos, Anki compara letra a letra | Ortografía del pinyin |
 | Escribir Hanzi | Pinyin + significado | Dibujas el carácter trazo a trazo, evaluado automáticamente | Escritura |
 
-`Pinyin -> Significado` es la plantilla más nueva (`card_template/pinyin_to_meaning/`,
-`ord=4` en `build_deck.build_model` -- añadida al *final* de la lista de
-plantillas a propósito, para no reordenar los `ord` 0-3 ya existentes y no
-romper el progreso/historial de tarjetas ya importadas).
+`Pinyin -> Significado` (`card_template/pinyin_to_meaning/`, `ord=4`) y
+`Significado -> Pinyin` (`card_template/english_to_pinyin/`, `ord=5`) son las
+plantillas más nuevas -- ambas añadidas al *final* de la lista en
+`build_deck.build_model` a propósito, para no reordenar los `ord` 0-3 (ni el
+4) ya existentes y no romper el progreso/historial de tarjetas ya
+importadas.
 
 La tarjeta de escritura de hanzi usa **[HanziWriter](https://hanziwriter.org/)**
 (librería JS de código abierto) con los datos de trazos oficiales de cada uno
@@ -143,7 +146,7 @@ AnkiMobile.
 4. Ajusta el límite de tarjetas si quieres (por defecto coge todas las que tocan repasar).
 5. **Build**. Se crea un mazo temporal con solo esas tarjetas, sin duplicar nada — tu progreso real sigue en el mazo original y al vaciar el filtrado (`Empty`) las tarjetas vuelven a su sitio.
 
-Puedes hacer lo mismo con `card:"Hanzi -> Significado"`, `card:"Significado -> Hanzi"`, `card:"Pinyin -> Significado"` o `card:"Escribir Hanzi"` para las otras cuatro.
+Puedes hacer lo mismo con `card:"Hanzi -> Significado"`, `card:"Significado -> Hanzi"`, `card:"Pinyin -> Significado"`, `card:"Significado -> Pinyin"` o `card:"Escribir Hanzi"` para las otras cinco.
 
 **Solución de problemas — "No se encontraron tarjetas coincidentes":**
 - Lo más probable es que tu colección de Anki todavía no tenga importada la versión del mazo que incluye esa plantilla en concreto (p. ej. "Escribir Pinyin" y "Escribir Hanzi" se añadieron en pasos posteriores del proyecto) — reimporta el `.apkg` más reciente de [`decks/`](../decks/) primero.
@@ -200,6 +203,90 @@ en AnkiDroid:
 Como los repasos se acumulan (nunca se borran salvo que hagas `Forget`), es
 seguro repetir este flujo cuando quieras -- cada vez parte del historial
 completo, no incremental.
+
+### 3.6 Introducir tarjetas nuevas a tu ritmo, por habilidad
+
+Los mazos filtrados no solo sirven para repasar por habilidad (§3.1) -- también
+sirven para controlar cuántas palabras nuevas quieres estrenar cada día, por
+separado en cada una de las 6 tarjetas del tipo de nota (§1.3).
+
+**¿Cuántas nuevas al día?** Cada palabra es 1 nota con 6 tarjetas (una por
+habilidad). Si metes N nuevas/día en cada habilidad, en la práctica introduces
+6xN tarjetas nuevas al día, y cada una generará varios repasos futuros a
+medida que Anki las reintroduzca -- la carga de repasos diarios crece durante
+las primeras semanas hasta estabilizarse. Con 5/día por habilidad (30
+tarjetas nuevas/día) se termina HSK1 (301 palabras) en ~2 meses, un ritmo
+sostenible para 6 habilidades a la vez. No hace falta usar el mismo número en
+las 6 -- si una habilidad cuesta más (p. ej. "Escribir Hanzi"), conviene meter
+menos ahí que en las de reconocimiento. Para ajustar el número con datos
+reales en vez de a ojo, usa `zhongwen-anki-export-stats` +
+`zhongwen-anki-analyze-stats` (§1.2) después de 1-2 semanas y sube o baja
+según si los repasos diarios se hacen pesados o sobra tiempo.
+
+**Cómo montarlo, por cada habilidad:**
+1. **Tools → Create Filtered Deck**, un nombre como `Nuevas - Hanzi -> Significado`.
+2. **Search**:
+   ```
+   deck:"Chino - HSK1 (HSK 3.0)" card:"Hanzi -> Significado" is:new
+   ```
+   (cambia `card:"..."` por la habilidad que toque). El `is:new` es la parte
+   clave -- sin él, un mazo filtrado normal solo trae tarjetas ya vencidas,
+   no las que nunca se han visto.
+3. **Order**: elige **"Order added"** (orden de creación) en vez de
+   "Random" -- así cada reconstrucción trae siempre las siguientes tarjetas
+   en orden estricto (1-5, luego 6-10, luego 11-15...), nunca al azar y nunca
+   repetidas. Como todas las plantillas se crean en el mismo orden de fila
+   del TSV, mantener el mismo ritmo (mismo número, mismo día) en las 6
+   mantiene las tandas de las distintas habilidades sincronizadas sobre las
+   mismas palabras.
+4. **Cards selected by this filter**: el número del día (normalmente 5; se
+   puede subir puntualmente para ponerse al día o adelantar varias tandas de
+   golpe -- Anki calcula solo qué corresponde, nunca hay que indicar el rango
+   a mano).
+5. **Build**.
+
+Se repite para cada habilidad en la que se quiera controlar el ritmo de
+nuevas por separado.
+
+**Mecánica de `is:new` (preguntas frecuentes):**
+- *¿Pueden volver a salir las de ayer?* No. `is:new` solo empareja tarjetas
+  que nunca se han contestado; en cuanto se responde una (aunque sea dentro
+  de un mazo filtrado) deja de ser "nueva" para siempre. El número en "Cards
+  selected" solo decide cuántas de las que **todavía quedan** se incluyen esa
+  vez.
+- *¿Se pierden las estadísticas o el progreso?* No. Contestar dentro de un
+  mazo filtrado se registra en el `revlog` igual que en el mazo normal (con
+  "Reschedule cards based on my answers" activado, el valor por defecto).
+  Cuando una tarjeta ya no encaja en la búsqueda, vuelve sola a su mazo de
+  origen con el progreso intacto. Los repasos a corto plazo de una tarjeta
+  recién introducida (a los 10 min / 1 día) no aparecen dentro de este mismo
+  mazo "solo nuevas" -- su búsqueda es estrictamente `is:new` -- saldrán en
+  la sesión normal del mazo `Chino - HSK1`, mezclados con el resto.
+- *¿Y cuando se acaban las palabras de ese nivel?* Reconstruir con cualquier
+  número no trae nada -- no es un error, solo significa que ya se han
+  introducido las 301 palabras de HSK1 en esa habilidad; de ahí en adelante
+  solo hay repasos normales (hasta subir de nivel o hacer `Forget`, §3.3). Si
+  se pide más de las que quedan (p. ej. 10 y solo hay 3), Anki da esas 3 sin
+  fallar.
+
+**¿Cuándo se "regenera" un mazo filtrado?** Nunca solo -- no hay ningún
+temporizador ni corte de día interno para esto. Un mazo filtrado se queda
+exactamente como se construyó hasta que se pulsa **Rebuild** (reconstruir) a
+mano; se puede hacer tantas veces al día como se quiera (al terminar una
+sesión, dos horas después, o cinco veces en un día), porque `is:new` es un
+estado, no una fecha. El único corte de día que existe en Anki (Preferences →
+Scheduling → "Next day starts at", 4am por defecto) solo afecta al contador
+de "New cards/day" de un mazo normal -- irrelevante aquí, porque el número se
+pone a mano cada vez.
+- **Anki Desktop**: clic en el mazo filtrado → engranaje ⚙️ → **Rebuild**.
+- **AnkiDroid / AnkiMobile**: abrir el mazo filtrado desde la lista y pulsar
+  el icono de reconstruir (flecha circular) arriba.
+
+**Uso recomendado en conjunto:** estos mazos "solo nuevas" son para
+introducir palabras al ritmo elegido; para repasar lo que ya está aprendido,
+se estudia el mazo normal `Chino - HSK1 (HSK 3.0)` tal cual -- ahí Anki
+mezcla repasos de las 6 habilidades automáticamente, lo cual además ayuda a
+la retención (mezclar habilidades en el repaso es mejor que bloquearlas).
 
 ## 4. Mejoras futuras a considerar
 

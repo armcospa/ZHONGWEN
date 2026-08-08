@@ -82,6 +82,11 @@ def build_model(fields: list, target_lang: str = DEFAULT_TARGET_LANG) -> genanki
                 "qfmt": _read(TEMPLATE_DIR / "pinyin_to_meaning" / "front.html", target_lang),
                 "afmt": _read(TEMPLATE_DIR / "pinyin_to_meaning" / "back.html", target_lang),
             },
+            {
+                "name": "Significado -> Pinyin",
+                "qfmt": _read(TEMPLATE_DIR / "english_to_pinyin" / "front.html", target_lang),
+                "afmt": _read(TEMPLATE_DIR / "english_to_pinyin" / "back.html", target_lang),
+            },
         ],
         css=css,
     )
