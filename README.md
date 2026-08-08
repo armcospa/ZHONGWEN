@@ -1,265 +1,257 @@
-# Chinese Card Generator
+# Zhongwen Anki
 
-The **Chinese Card Generator** is a Python package designed to streamline the process of creating **Anki flashcards** for learning Chinese. It combines LLM-generated content with customized Python processing to turn lists of Chinese words into formatted Anki cards, making it easier to review and learn new Chinese vocabulary.
+**Zhongwen Anki** es una herramienta en Python para generar mazos de Anki completos a partir de listas de vocabulario chino (HSK1, HSK2, HSK3...), pensada para estudiantes hispanohablantes. Combina contenido generado por un LLM (frases de ejemplo, sinónimos, definiciones) con procesado automático en Python (coloreado por tono, pinyin, escritura de trazos) para producir un mazo listo para importar en Anki.
 
-This package assists in:
-1. Requesting an LLM to generate related content, including example sentences, synonyms, and dictionary definitions, for a list of Chinese words.
-2. Processing the generated content using Python scripts to format it into Anki-compatible flashcards.
-3. Adding helpful tone markings on Chinese characters and generating fields such as **pinyin**, **translations**, **example sentences**, and **synonyms** to enhance language learning.
+Pensado para compartir: si solo quieres estudiar, no necesitas instalar nada — ver [Opción A](#opción-a--solo-quiero-estudiar-con-las-fichas-sin-instalar-nada) más abajo. Si quieres generar tu propio vocabulario o ampliar un nivel, ver [Opción B](#opción-b--quiero-generar-mi-propio-vocabulario-o-ampliar-un-nivel).
 
-## Examples
+## Qué hace este repositorio
 
-### From English to Chinese:
+Por cada palabra china genera **4 tarjetas**:
+
+| Tarjeta | Pregunta | Respuesta | Qué entrena |
+|---|---|---|---|
+| Hanzi → Significado | Carácter | Significado (ES, con EN de apoyo) | Lectura |
+| Significado → Hanzi | Significado (ES, con EN de apoyo) | Carácter + pinyin | Producción |
+| Escribir Pinyin | Carácter | Escribes el pinyin con tonos; Anki lo compara letra a letra | Ortografía del pinyin |
+| Escribir Hanzi | Pinyin + significado | Dibujas el carácter trazo a trazo, con [HanziWriter](https://hanziwriter.org/) validando forma, dirección y orden de cada trazo | Escritura a mano |
+
+Además de esas 4 preguntas, cada tarjeta muestra pinyin con tonos, caracteres coloreados por tono, hasta 3 sinónimos y una definición corta en chino. El botón **"Unhide"** revela las secciones ocultas (pinyin y coloreado), para poder intentar leer o escribir antes de comprobar la respuesta.
+
+### Ejemplos
+
+**De inglés/español a chino:**
 <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
   <img src="resources/en_zh_桥梁_front.jpg" alt="Front" style="width: 32%;">
   <img src="resources/en_zh_桥梁_back_hidden.jpg" alt="Back Hidden" style="width: 32%;">
   <img src="resources/en_zh_桥梁_back.jpg" alt="Back" style="width: 32%;">
 </div>
 
-### From Chinese to English:
+**De chino a inglés/español:**
 <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
   <img src="resources/zh_en_下划线_front.jpg" alt="Front" style="width: 32%;">
   <img src="resources/zh_en_下划线_back_hidden.jpg" alt="Back Hidden" style="width: 32%;">
   <img src="resources/zh_en_下划线_back.jpg" alt="Back" style="width: 32%;">
 </div>
 
-## Card details
+## Cómo funciona por dentro
 
-The card features five buttons that offer useful tools to enrich your learning experience by providing access to additional resources and controls:
+El proceso completo es una cadena de 3 pasos, cada uno un script de Python bajo [`src/zhongwen_anki/`](src/zhongwen_anki/):
 
-1. **Synonyms**:  
-   This button links to Pleco, where it performs a search for synonyms of the main word on the card. It helps you expand your vocabulary by presenting related words with similar meanings.
+1. **[`enrich.py`](src/zhongwen_anki/enrich.py)** (comando `zhongwen-anki`) — coge un TSV "crudo" (palabra, traducciones y frase de ejemplo, generado con ayuda de un LLM — ver [Opción B](#opción-b--quiero-generar-mi-propio-vocabulario-o-ampliar-un-nivel)) y lo enriquece: colorea los caracteres por tono, y genera automáticamente el pinyin de frases y definiciones (`jieba` para segmentar palabras, `pypinyin` para el pinyin con tonos). El resultado es un segundo TSV con todas las columnas que necesitan las tarjetas.
+2. **[`build_hanzi_templates.py`](src/zhongwen_anki/build_hanzi_templates.py)** (comando `zhongwen-anki-build-hanzi-templates`) — mira qué caracteres aparecen en el vocabulario (de todos los niveles a la vez) y regenera las plantillas HTML de "Escribir Hanzi", incrustando los datos de trazos de cada carácter directamente como texto estático dentro del HTML (para que funcione de forma fiable incluso en AnkiDroid, que a veces no carga a tiempo los ficheros multimedia externos).
+3. **[`build_deck.py`](src/zhongwen_anki/build_deck.py)** (comando `zhongwen-anki-build-deck`) — empaqueta el TSV enriquecido junto con las plantillas HTML/CSS de [`card_template/`](card_template/) en un único `.apkg`, el formato que Anki importa.
 
-2. **Dictionary**:  
-   Clicking this button opens Pleco to display the dictionary definition of the main word. It provides detailed information such as meanings, examples, and related terms.
+El resultado ya compilado de este proceso para HSK1 vive en [`decks/HSK1.apkg`](decks/HSK1.apkg) — no hace falta ejecutar nada de esto si solo quieres estudiar.
 
-3. **Unhide**:  
-   The "Unhide" button reveals or hides specific hidden elements on the card, such as pinyin and color-coded examples for both the dictionary and sentence sections. It allows you to challenge yourself by trying to pronounce the word or sentence tones before revealing the correct pinyin.
+Hay un cuarto script, **[`export_stats.py`](src/zhongwen_anki/export_stats.py)** (comando `zhongwen-anki-export-stats`), que no forma parte de la cadena de generación: lee tu propio historial de repasos de Anki y lo exporta a CSV para analizarlo (ver [Analizar tu propio progreso](#analizar-tu-propio-progreso)).
 
-4. **Word**:  
-   This button searches for the word itself in Pleco, providing detailed information about its usage, pronunciation, and meaning, including its appearance in different dictionary contexts.
+### Estructura del proyecto
 
-5. **Sentence**:  
-   This button links to Pleco, showing a search result for the example sentence on the card. It gives further context for the word by illustrating how it's used in real sentences.
-
-These buttons seamlessly integrate with the Pleco dictionary app, giving you quick access to detailed explanations, synonyms, and contextual examples to support your Chinese learning journey.
-
-## Workflow
-
-1. **Install Anki**:
-   - Download and install the Anki application, available for **Windows**, **macOS**, **Android**, and **iOS** platforms. Visit the [official Anki website](https://apps.ankiweb.net/) to download the version for your device.
-   - After installation, consider creating an account to sync your decks across devices.
-   - If you are on Android or iOS, you can install `Pleco` in order to leverage the [buttons](#examples) I created to lookup more in detail the characters.
-
-2. **Import Deck**:
-   - To get started, import the `deck.apkg` file into your Anki library:
-     - In Anki, go to `File > Import` and select the `deck.apkg` file.
-     - The deck will be added to your Anki collection, ready for use.
-
-3. **Prepare the List of Words**:
-   - Create a text file containing a list of Chinese words you want to study. This file will serve as input for generating detailed flashcard content using a large language model. I personally use the [Zhongwen Browser Extension](#additional-tools) to gather the vocabulary.
-   - Example of the format for the word list:
-     ```plaintext
-     向量 vector
-     矩阵 matrix
-     ...
-     ```
-
-4. **LLM Query**:
-   - Use the following prompt with an LLM to generate the necessary content for each word in your list. You can do that by copying the following prompt, append the word list at the end, and send it manually in an LLM conversation such as on [ChatGPT](https://chatgpt.com/?model=gpt-4o).
-   - CGPT4 seems to struggle to output the right format. CGPT4.1 seems better to handle this.
-
-   ~~~plaintext
-   ### Prompt:
-   
-   Please create a tab-separated table for the given list of Chinese words. Each entry should include the following columns:
-   
-   1.  **Simplified Characters**: The simplified version of the Chinese characters.
-   2.  **Traditional Characters**: The traditional version of the Chinese characters.
-   3.  **Pinyin**: The pinyin transcription of the Chinese word, with **one space** between each words.
-   4.  **Meaning**: The English meaning or translation of the word.
-   5.  **Sentence Example**: A simple example sentence using the word in Chinese. Ensure this sentence provides good context for the word, especially if it's a polyphonic character. 
-   6.  **Sentence Meaning**: The English translation of the example sentence.
-   7.  **Synonym**: Up to three synonyms for the word, formatted as "SimplifiedCharacters (Pinyin) - Translation", separated by `<br>`. The pinyin in parentheses here should be for the synonym itself.
-   8.  **DictionarySimplified**: A short definition of the word in Chinese characters, giving a brief explanation of the term's meaning.
-   9.  **DictionaryMeaning**: The English translation of the definition, giving a brief explanation of the term's meaning.
-   
-   Use the above structure to create the table for each entry from the provided list of words.
-   The input can be only Chinese words, or Chinese words with hints of their meaning. The list may vary in form, such as just the Chinese word, the word with a hint of its meaning, its pinyin, or an indication of its domain.
-   If the word includes an error (e.g. malformed characters, misspelled pinyin, etc.), attempt to correct it and note the correction at the end.
-   If a word is too unclear or ambiguous to reasonably interpret, do not include it in the table, and list it at the end of the output with a note indicating that its meaning or intent could not be confidently determined.
-   If a word has multiple common meanings, choose the most likely or general one based on common usage; do not attempt to cover all meanings at this stage.
-
-   -----
-   
-   ### Example Input
-   
-   ```
-   - 向量 vector
-   - 矩阵 (matrix)
-   - ...
-   ```
-   
-   -----
-   
-   ### Example Output
-   
-   ```tsv
-   Simplified	Traditional	Pinyin	Meaning	SentenceSimplified	SentenceMeaning	Synonyms	DictionarySimplified	DictionaryMeaning
-   向量	向量	xiàng liàng	vector	我们需要计算这个向量的长度。	We need to calculate the length of this vector.	矢量 (shǐ liàng) - vector<br>量向 (liàng xiàng) - vector	数学中用于表示方向和大小的对象	object used in mathematics to represent direction and magnitude
-   矩阵	矩陣	jǔ zhèn	matrix	这个矩阵的行列式为零。	The determinant of this matrix is zero.	方阵 (fāng zhèn) - square matrix	由数或变量排列成的矩形阵列	rectangle array formed by numbers or variables
-   ```
-   
-   -----
-   
-   ### Tips for Generating the Table:
-   
-   1.  **Contextual Example Sentences**: The `Sentence Example` should clearly demonstrate the usage of the word, which is especially important for words with multiple meanings or pronunciations (polyphonic characters). The sentence should help infer the correct context.
-   2.  **Synonym Formatting**: For the `Synonym` column, ensure each synonym follows the "SimplifiedCharacters (Pinyin) - Translation" format, with `<br>` separating multiple synonyms.
-   3.  **Short but Descriptive Definitions**: The `DictionarySimplified` and `DictionaryMeaning` columns should provide concise but informative definitions.
-   4.  **Accuracy**: Make sure traditional and simplified characters are accurately paired, and translations and meanings reflect the specific terms.
-   5.  **Simplicity in Sentences**: For `Sentence Example`, do not put any special characters or numbers beyond standard Chinese characters, commas (，), and full stops (。). This helps avoid processing issues.
-   6.  **Word Spacing in Chinese Text**: For `Sentence Example` and `DictionarySimplified`.
-   7.  **Formatting**: Return only the table, exactly the way I formatted the output, with a tab separating the entries.
-   
-   Try to process as many words as possible in order; if the full list cannot be completed in one reply, I will send "continue" so you can resume the generation from where you left off.
-   Reply in a TSV codeblock, do not generate code per se, do not write python or use pandas.
-   
-   ### Word List
-
-   <<WORD LIST HERE>>
-   ~~~
-
-   This will generate a table with all necessary fields for the flashcards.
-   [Here](https://chatgpt.com/share/6513c81e-73af-476b-b6d8-cffaeb83652f) is an example of conversation to get the word list. Also [`./data/input.tsv`](./data/input.tsv) is an example of word list generated.
-
-5. **Data Processing**:
-   - Once you receive the generated data from the LLM, save it as a `.tsv` file and process it with the `zhongwen-anki` package:
-     ```bash
-     zhongwen-anki -i 'input_file_path' -o 'output_file_path'
-     ```
-   - Replace `input_file_path` with the path to your input `.tsv` file and `output_file_path` with your desired output path for the processed data.
-
-6. **Import Processed Data into Anki**:
-   - Import the processed `.tsv` file into Anki by selecting `File > Import` and choosing the file. Make sure the fields are correctly mapped before importing.
-
-7. **Start Learning**:
-   - Begin reviewing your new flashcards. Adjust your Anki settings for optimal learning based on your preferences (see recommendations below).
-
-
-## Anki Settings
-
-Since learning vocabulary can take time, it’s important to optimize your Anki settings for effective review sessions. 
-
-<details>
- 
-<summary>Here is my deck setting (it is tailored made and should be tuned at your liking)</summary>
- 
 ```
- # Daily Limits
- New cards/day = 5
- Maximum reviews/day = 100
- 
- # New Cards
- Learning steps = 1m 10m 1d 6d
- Graduating interval = 7
- Easy interval = 10
- Insertion order = Random
- 
- # Lapses
- Relearning steps = 10m 20m
- Minimum interval = 2
- Leech threshold = 5
- Leech action = Tag Only
- 
- # Advanced
- Maximum interval = 365
- Starting ease = 2.50
- Easy bonus = 1.30
- Interval modifier = 1.10
- Hard interval = 1.20
- New interval = 0.80
+zhongwen-anki/
+├── src/zhongwen_anki/          # Paquete Python instalable (los 4 scripts anteriores)
+├── card_template/               # HTML/CSS de las 4 tarjetas + librería HanziWriter
+├── data/
+│   ├── hsk1/input.tsv            # Vocabulario HSK1 (301 palabras, completo)
+│   ├── hsk2/, hsk3/               # Preparadas para rellenar (ver README de cada carpeta)
+├── decks/                        # Mazos .apkg ya generados, listos para importar
+├── tests/                        # Suite de pytest
+├── docs/FUNCIONALIDADES.md       # Documentación ampliada (en español)
+└── resources/                    # Capturas de pantalla
 ```
- 
-</details>
 
-You can further adjust these settings based on your progress and preferences. For more in-depth guidance on customizing Anki, check out these resources:
-- [Guide to Anki Intervals and Learning Steps](https://youtu.be/1XaJjbCSXT0)
-- [Other Anki Tutorials](https://www.youtube.com/results?search_query=anki+guide)
+## Opción A — Solo quiero estudiar con las fichas (sin instalar nada)
 
-## Anki Add-ons
+Este es el camino pensado para compartir el mazo con amigos que no van a tocar código:
 
-Here are some recommended Anki add-ons to enhance your learning experience:
+1. Instalar [Anki](https://apps.ankiweb.net/) (Windows, macOS, Android, iOS) y, si quieres sincronizar entre varios dispositivos, crear una cuenta.
+2. Descargar este repositorio: en GitHub, botón **Code → Download ZIP** (o `git clone` si prefieres la línea de comandos), y descomprimirlo.
+3. Abrir Anki → `Archivo > Importar` → seleccionar el archivo [`decks/HSK1.apkg`](decks/HSK1.apkg) dentro de la carpeta descargada.
+4. Empezar a repasar. Usa el botón **"Unhide"** en las tarjetas para revelar pinyin y coloreado antes de comprobar tu respuesta.
 
-- **[Auto Ease Factor](https://ankiweb.net/shared/info/1672712021)** or **[Reset Ease](https://ankiweb.net/shared/info/947935257)**: These add-ons help prevent you from falling into [Ease Hell](https://www.youtube.com/watch?v=roR8S9zjUh8), where cards become harder to review due to the scheduling algorithm.
-- **[Review Heatmap](https://ankiweb.net/shared/info/1771074083)**: Visualize your past and future review activity with this helpful heatmap, which can motivate you to stay consistent.
+No hace falta instalar Python, ni ningún paquete, ni ejecutar ningún comando para esto.
 
-You can find additional add-ons on the [Anki add-ons page](https://ankiweb.net/shared/addons/2.1).
+## Opción B — Quiero generar mi propio vocabulario o ampliar un nivel
 
-## Additional Tools
+Este camino sí requiere el entorno de Python, porque implica ejecutar los 3 scripts descritos en [Cómo funciona por dentro](#cómo-funciona-por-dentro).
 
-[Zhongwen Browser Extension](https://github.com/cschiller/zhongwen) is a Chinese pop-up dictionary available for browsers like Chrome and Firefox. It’s an excellent tool for quickly translating Chinese words by hovering over them with your mouse.
+### Instalación
 
-- **Quick Vocabulary Addition**: Press `R` while hovering over a word to instantly add it to your vocabulary list.
-- **Access Your List**: Use `Alt + W` to view the vocabulary list you've built.
-
-This tool is especially useful for quickly identifying and understanding new Chinese words as you browse the web. Additionally, it’s great for **easily creating a list of words** that can be used in the tool you’re setting up. By building a personalized vocabulary list as you encounter new words, you can seamlessly integrate these words into the flashcard generation process, making it easier to create your own Anki deck.
-
-## Notes
-
-- **Card Themes**: Although the cards should function in various themes (light, plain, dark), they are specifically optimized for the **black theme** in Anki. Consider switching to the black theme for the best experience.
-- **Anki Scheduling**: Anki's scheduling system is crucial to effective learning. Be sure to explore and customize the intervals, learning steps, and other settings to match your personal learning style. This can significantly improve retention and reduce burnout.
-  - Customize the number of new cards per day and review limits based on your time commitment and learning capacity.
-  - Regularly assess your progress and adjust settings like ease and intervals to optimize long-term retention.
-- **Deck Backup**: Always back up your Anki decks regularly to prevent data loss. Use Anki’s sync feature with AnkiWeb, or manually export `.apkg` files.
-
-## Data Fields for Review
-
-When you create your Anki cards using this package, the following fields will be included on each card for effective review:
-
-1. **Simplified Characters**: The modern simplified version of the Chinese word.
-2. **Traditional Characters**: The classical traditional form of the word.
-3. **Pinyin**: The pronunciation guide with correct tone markings.
-4. **Meaning**: The English translation of the word.
-5. **Example Sentence**: A simple sentence that demonstrates how the word is used in context, with pinyin and translation.
-6. **Synonyms**: Up to three related words or expressions with pinyin and English translations.
-7. **Dictionary Entry**:
-   - **DictionarySimplified**: A short definition of the word in Chinese.
-   - **DictionaryPinyin**: Pinyin transcription of the Chinese definition.
-   - **DictionaryMeaning**: The English translation of the definition.
-8. **Hint**: The first character of the word to help with recall during reviews.
-
-
-## Installation
-
-Install the package from the repository:
+Requiere Python 3.10+.
 
 ```bash
-pip install git+https://github.com/thomashirtz/zhongwen-anki#egg=zhongwen-anki
+git clone <url-de-tu-fork>
+cd zhongwen-anki
+python -m venv .venv
+.venv\Scripts\activate       # Windows; en macOS/Linux: source .venv/bin/activate
+pip install -e ".[deck,test]"
 ```
 
-## Buy me a coffee ツ
+Esto instala la librería y registra los siguientes comandos en tu entorno virtual:
 
-If this repository helped you or you if you like this project, feel free to support me!  
+| Comando | Qué hace |
+|---|---|
+| `zhongwen-anki` | Enriquece un `input.tsv` (pinyin, coloreado, traducción) |
+| `zhongwen-anki-build-deck` | Empaqueta un `output.tsv` en un `.apkg` |
+| `zhongwen-anki-build-hanzi-templates` | Regenera las plantillas de escritura de hanzi |
+| `zhongwen-anki-export-stats` | Exporta tu historial de repasos de Anki a CSV |
 
-<a href="https://www.paypal.com/donate/?hosted_button_id=2KQR9V6PRSBPC">
-  <img src="https://raw.githubusercontent.com/stefan-niedermann/paypal-donate-button/master/paypal-donate-button.png" alt="Donate with PayPal" width="180" />
-</a>
+### Paso 1: Preparar la lista de palabras
 
-## License
+Crea un archivo de texto con las palabras chinas que quieres estudiar. La [extensión Zhongwen](#herramientas-adicionales) es una forma rápida de ir construyendo esta lista mientras navegas.
 
 ```
-Copyright 2021 Thomas Hirtz
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+向量 vector
+矩阵 matrix
+...
 ```
+
+### Paso 2: Generar el contenido con un LLM
+
+Copia el siguiente prompt, sustituye `<IDIOMA_DESTINO>` por tu idioma nativo (por defecto, y para lo que están pensadas las plantillas de este repositorio, **español**), añade tu lista de palabras al final, y envíalo a un LLM (ChatGPT 4.1 o superior da mejores resultados con el formato que GPT-4 a secas).
+
+~~~text
+### Prompt:
+
+Crea una tabla separada por tabulaciones para la siguiente lista de palabras chinas. Cada entrada debe incluir las siguientes columnas:
+
+1.  **Simplified**: caracteres simplificados.
+2.  **Traditional**: caracteres tradicionales.
+3.  **Pinyin**: pinyin con tonos, con **un espacio** entre sílabas de palabras distintas.
+4.  **Meaning**: significado en inglés.
+5.  **Meaning<IDIOMA_DESTINO>**: significado en <IDIOMA_DESTINO>, traducido directamente del chino (no del inglés de la columna anterior), para poder comparar ambas traducciones de forma independiente.
+6.  **SentenceSimplified**: frase de ejemplo sencilla en chino que dé buen contexto a la palabra (importante si el carácter es polifónico).
+7.  **SentenceMeaning**: traducción al inglés de la frase de ejemplo.
+8.  **SentenceMeaning<IDIOMA_DESTINO>**: traducción al <IDIOMA_DESTINO> de la frase de ejemplo, también directamente del chino.
+9.  **Synonyms**: hasta 3 sinónimos en inglés, formato "CaracteresSimplificados (Pinyin) - Traducción", separados por `<br>`.
+10. **Synonyms<IDIOMA_DESTINO>**: los mismos sinónimos, con la traducción en <IDIOMA_DESTINO>.
+11. **DictionarySimplified**: definición corta en chino.
+12. **DictionaryMeaning**: traducción al inglés de esa definición.
+13. **DictionaryMeaning<IDIOMA_DESTINO>**: traducción al <IDIOMA_DESTINO> de esa definición, directamente del chino.
+
+Procesa tantas palabras como sea posible en orden; si no puedes terminar la lista completa en una respuesta, yo enviaré "continua" para que sigas desde donde lo dejaste.
+Si una palabra tiene un error (caracteres mal formados, pinyin mal escrito, etc.), corrígelo e indica la corrección al final.
+Si una palabra es demasiado ambigua para interpretarla con confianza, no la incluyas en la tabla y lístala al final indicando que no se pudo determinar su significado.
+Si una palabra tiene varios significados comunes, elige el más general según el uso habitual; no intentes cubrir todos los significados.
+
+Responde en un bloque de código TSV, sin generar código como tal, sin usar Python ni pandas.
+
+-----
+
+### Lista de palabras
+
+<<LISTA DE PALABRAS AQUÍ>>
+~~~
+
+[Aquí](./data/hsk1/input.tsv) tienes un ejemplo real de lista generada (HSK1, en español).
+
+> **¿Otro idioma que no sea español?** El pipeline no está atado a español en el código: es un sufijo de columna configurable (`--target-lang`, ver paso 4). Puedes usar el mismo prompt cambiando `<IDIOMA_DESTINO>` por cualquier idioma; solo tendrás que adaptar también los textos fijos de las plantillas HTML en `card_template/` (que sí están escritos en español, ya que es el idioma principal de este fork).
+
+### Paso 3: Guardar la lista generada
+
+Guarda la tabla TSV que te devolvió el LLM como `data/hsk1/input.tsv` (o `data/hsk2/input.tsv`, `data/hsk3/input.tsv` si estás rellenando otro nivel — ver también [Cómo añadir un nuevo nivel](#cómo-añadir-un-nuevo-nivel-hsk2-hsk3)).
+
+### Paso 4: Regenerar las plantillas de escritura de hanzi
+
+Necesario la primera vez y cada vez que el vocabulario de cualquier nivel incorpore caracteres nuevos:
+
+```bash
+zhongwen-anki-build-hanzi-templates
+```
+
+Escanea automáticamente **todos** los `data/*/input.tsv` que encuentre (todos los niveles), porque el tipo de nota de "Escribir Hanzi" es el mismo para todos.
+
+### Paso 5: Generar el TSV enriquecido
+
+```bash
+zhongwen-anki -i data/hsk1/input.tsv -o data/hsk1/output.tsv
+```
+
+Esto es exactamente el paso 1 de [Cómo funciona por dentro](#cómo-funciona-por-dentro): colorea los caracteres por tono, genera automáticamente el pinyin de frases y definiciones, y añade las columnas derivadas que usan las tarjetas.
+
+Por defecto lee/escribe las traducciones en las columnas `*ES` (español). Para otro idioma:
+
+```bash
+zhongwen-anki -i data/hsk2/input.tsv -o data/hsk2/output.tsv --target-lang FR
+```
+
+### Paso 6: Empaquetar el mazo
+
+```bash
+zhongwen-anki-build-deck -i data/hsk1/output.tsv -o decks/HSK1.apkg --level HSK1
+```
+
+`--level` fija el nombre del mazo y la etiqueta (`HSK1`, `HSK2`, `HSK3`...) de cada nota.
+
+### Paso 7: Importar en Anki
+
+`Archivo > Importar` y selecciona el `.apkg` que acabas de generar. Anki actualizará las notas existentes (mismo tipo de nota, mismos IDs) sin perder tu progreso si ya lo habías importado antes.
+
+## Cómo añadir un nuevo nivel (HSK2, HSK3...)
+
+La infraestructura para varios niveles ya existe; falta el vocabulario en sí:
+
+1. Rellena `data/hsk2/input.tsv` (o `data/hsk3/`) con el mismo esquema que `data/hsk1/input.tsv` — ver el `README.md` de esa carpeta, o repite los pasos 1-3 de la Opción B.
+2. `zhongwen-anki-build-hanzi-templates` (añade los caracteres nuevos a las plantillas compartidas).
+3. `zhongwen-anki -i data/hsk2/input.tsv -o data/hsk2/output.tsv`
+4. `zhongwen-anki-build-deck -i data/hsk2/output.tsv -o decks/HSK2.apkg --level HSK2`
+
+`HSK1`, `HSK2` y `HSK3` ya tienen un ID de mazo reservado en `DECK_IDS` (`src/zhongwen_anki/build_deck.py`); para ir más allá de HSK3 basta con añadir una entrada nueva ahí (debe ser estable: no cambies el ID de un nivel que ya hayas compartido, o el siguiente reimport creará un mazo duplicado en vez de actualizar el existente).
+
+## Ajustes recomendados en Anki
+
+<details>
+<summary>Configuración de mazo usada en este repositorio (ajústala a tu gusto)</summary>
+
+```
+# Límites diarios
+Tarjetas nuevas/día = 5
+Repasos máximos/día = 100
+
+# Tarjetas nuevas
+Pasos de aprendizaje = 1m 10m 1d 6d
+Intervalo de graduación = 7
+Intervalo fácil = 10
+Orden de inserción = Aleatorio
+
+# Fallos
+Pasos de re-aprendizaje = 10m 20m
+Intervalo mínimo = 2
+Umbral de sanguijuela = 5
+Acción de sanguijuela = Solo etiquetar
+
+# Avanzado
+Intervalo máximo = 365
+Facilidad inicial = 2.50
+Bonus fácil = 1.30
+Modificador de intervalo = 1.10
+Intervalo difícil = 1.20
+Nuevo intervalo = 0.80
+```
+</details>
+
+Complementos recomendados: **[Auto Ease Factor](https://ankiweb.net/shared/info/1672712021)** o **[Reset Ease](https://ankiweb.net/shared/info/947935257)** (evitan la "ease hell"), y **[Review Heatmap](https://ankiweb.net/shared/info/1771074083)** (visualiza tu constancia).
+
+## Herramientas adicionales
+
+[Zhongwen Browser Extension](https://github.com/cschiller/zhongwen) es un diccionario chino emergente para Chrome/Firefox — pulsa `R` sobre una palabra para añadirla a tu lista de vocabulario, y `Alt+W` para verla. Muy útil para construir la lista de palabras del paso 1 de la Opción B.
+
+## Analizar tu propio progreso
+
+```bash
+zhongwen-anki-export-stats --deck "HSK1" -o data/anki_reviews.csv
+```
+
+Exporta cada repaso individual (acierto/fallo, tiempo empleado, intervalo) directamente desde `collection.anki2`, para analizarlo fuera de Anki (por nivel, por tipo de tarjeta, por palabra...). Ver [`docs/FUNCIONALIDADES.md`](docs/FUNCIONALIDADES.md) para más detalle y trucos de uso dentro de Anki (mazos filtrados, reordenar tarjetas, resetear historial...).
+
+## Tests
+
+```bash
+pytest
+```
+
+## Créditos y licencia
+
+Basado en el proyecto original [`zhongwen-anki`](https://github.com/thomashirtz/zhongwen-anki) de Thomas Hirtz. La tarjeta de escritura de hanzi usa [HanziWriter](https://hanziwriter.org/) (MIT) y datos de trazos derivados de [Make Me a Hanzi](https://github.com/skishore/makemeahanzi) (licencia Arphic Public — ver [`card_template/hanzi_writing/NOTICE.md`](card_template/hanzi_writing/NOTICE.md)).
+
+Distribuido bajo licencia MIT — ver [`LICENSE`](LICENSE).
