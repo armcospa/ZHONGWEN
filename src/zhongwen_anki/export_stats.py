@@ -50,6 +50,7 @@ CARD_TYPE_BY_ORD = {
     2: "Escribir Pinyin",
     3: "Escribir Hanzi",
     4: "Pinyin -> Significado",
+    5: "Significado -> Pinyin",
 }
 
 
