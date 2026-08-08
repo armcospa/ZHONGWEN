@@ -15,3 +15,7 @@ data/anki_reviews.csv
 # Generated intermediate files: regenerate with `zhongwen-anki`
 # (data/<level>/input.tsv is the curated source and stays tracked)
 data/*/output.tsv
+
+# Scratch/reference PDFs used while building vocabulary lists, not source data
+data/pdfs/
+data/raw/
