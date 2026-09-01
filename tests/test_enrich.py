@@ -67,6 +67,23 @@ def test_generate_flashcards_drops_duplicate_simplified(tmp_path):
     assert len(out) == 1
 
 
+def test_generate_flashcards_keeps_polyphonic_readings(tmp_path):
+    """Same character, different Pinyin (e.g. 还 hái "still" vs huán "to
+    return") are distinct vocabulary entries and must both survive, not just
+    the first one -- only an exact (Simplified, Pinyin) match is a dup."""
+    input_path = tmp_path / "input.tsv"
+    output_path = tmp_path / "output.tsv"
+    row_a = ["还", "還", "hái", "still, also", "他还没到。", "He hasn't arrived yet.", "", "仍旧", "still"]
+    row_b = ["还", "還", "huán", "to return", "请把书还给我。", "Please return the book to me.", "", "归还", "to return"]
+    _write_tsv(input_path, [row_a, row_b], REQUIRED_COLS)
+
+    generate_flashcards(input_path, output_path)
+
+    out = pd.read_csv(output_path, sep="\t", dtype=str)
+    assert len(out) == 2
+    assert set(out["Pinyin"]) == {"hái", "huán"}
+
+
 def test_generate_flashcards_supports_a_custom_target_lang(tmp_path):
     """--target-lang generalizes the pipeline beyond Spanish: any suffix
     reads/writes its own set of translation columns (e.g. "FR" ->

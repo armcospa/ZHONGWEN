@@ -40,6 +40,13 @@ def optional_cols(target_lang: str = DEFAULT_TARGET_LANG) -> List[str]:
     return [_lang_col(field, target_lang) for field in TRANSLATABLE_FIELDS]
 
 
+# Other optional columns that pass straight through to the output when
+# present (e.g. "SourceLevel", used by decks that merge several HSK levels'
+# word lists into one input.tsv to mark which level a word originally
+# belongs to), defaulting to empty rather than being required.
+PASSTHROUGH_OPTIONAL_COLS: List[str] = ["SourceLevel"]
+
+
 def output_columns(target_lang: str = DEFAULT_TARGET_LANG) -> List[str]:
     return [
         "Simplified", "SimplifiedColored",
@@ -50,6 +57,7 @@ def output_columns(target_lang: str = DEFAULT_TARGET_LANG) -> List[str]:
         "Synonyms", "SynonymsColored", _lang_col("Synonyms", target_lang),
         "DictionarySimplified", "DictionarySimplifiedColored", "DictionaryPinyin",
         "DictionaryMeaning", _lang_col("DictionaryMeaning", target_lang),
+        "SourceLevel",
     ]
 
 
@@ -91,6 +99,7 @@ def _transform_row(row: pd.Series, target_lang: str = DEFAULT_TARGET_LANG) -> di
         "DictionaryPinyin": words_to_pinyin(dictionary_words),
         "DictionaryMeaning": row["DictionaryMeaning"],
         _lang_col("DictionaryMeaning", target_lang): row[_lang_col("DictionaryMeaning", target_lang)],
+        "SourceLevel": row["SourceLevel"],
     }
 
 
@@ -115,16 +124,16 @@ def generate_flashcards(
     # fill NaN with empty string to avoid None issues downstream
     df = df.fillna("")
 
-    # optional columns (e.g. translations) default to empty if absent
-    for col in optional_cols(target_lang):
+    # optional columns (e.g. translations, SourceLevel) default to empty if absent
+    for col in optional_cols(target_lang) + PASSTHROUGH_OPTIONAL_COLS:
         if col not in df.columns:
             df[col] = ""
 
     before = len(df)
-    df = df.drop_duplicates(subset="Simplified", keep="first")
+    df = df.drop_duplicates(subset=["Simplified", "Pinyin"], keep="first")
     after = len(df)
     if after < before:
-        print(f"Removed {before - after:,} duplicate rows based on 'Simplified'.")
+        print(f"Removed {before - after:,} duplicate rows based on 'Simplified' + 'Pinyin'.")
 
     columns = output_columns(target_lang)
     processed_rows = [_transform_row(row, target_lang) for _, row in df.iterrows()]
