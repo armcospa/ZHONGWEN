@@ -21,6 +21,7 @@ DECK_IDS = {
     "HSK1": 2059400110,
     "HSK2": 2059400111,
     "HSK3": 2059400112,
+    "HSK4": 2059400113,
 }
 
 TEMPLATE_DIR = Path(__file__).resolve().parent.parent.parent / "card_template"
