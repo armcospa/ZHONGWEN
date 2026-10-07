@@ -10,6 +10,7 @@ from zhongwen_anki.utilities import (
     words_to_pinyin,
     words_to_colored_hanzi,
     process_synonyms,
+    pinyin_to_numbered,
 )
 
 DEFAULT_TARGET_LANG = "ES"
@@ -46,8 +47,22 @@ def optional_cols(target_lang: str = DEFAULT_TARGET_LANG) -> List[str]:
 # belongs to), defaulting to empty rather than being required.
 PASSTHROUGH_OPTIONAL_COLS: List[str] = ["SourceLevel"]
 
+# Frozen Anki note GUID (see build_deck.note_guid). Optional in the input
+# TSV, copied to the output TSV as its last column, but not a note field.
+GUID_COL = "Guid"
+
+# What makes two rows the same vocabulary entry. Same character with a
+# different reading (还 hái / huán) or a different sense with the same
+# reading (生 shēng "to give birth" / "raw") are distinct entries.
+DEDUP_KEY: List[str] = ["Simplified", "Pinyin", "Meaning"]
+
 
 def output_columns(target_lang: str = DEFAULT_TARGET_LANG) -> List[str]:
+    """Note fields, in order. The output TSV has these plus GUID_COL.
+
+    Only ever APPEND new fields: decks already imported into Anki hold the
+    fields in this order, and importing with "Merge note types" maps a
+    changed note type onto the existing one (see CONTRIBUTING.md)."""
     return [
         "Simplified", "SimplifiedColored",
         "Traditional", "TraditionalColored",
@@ -57,7 +72,7 @@ def output_columns(target_lang: str = DEFAULT_TARGET_LANG) -> List[str]:
         "Synonyms", "SynonymsColored", _lang_col("Synonyms", target_lang),
         "DictionarySimplified", "DictionarySimplifiedColored", "DictionaryPinyin",
         "DictionaryMeaning", _lang_col("DictionaryMeaning", target_lang),
-        "SourceLevel",
+        "SourceLevel", "PinyinNumbered",
     ]
 
 
@@ -91,7 +106,9 @@ def _transform_row(row: pd.Series, target_lang: str = DEFAULT_TARGET_LANG) -> di
         "SentencePinyin": words_to_pinyin(sentence_words),
         # Synonyms
         "Synonyms": row["Synonyms"],
-        "SynonymsColored": process_synonyms(row["Synonyms"]),
+        # Colored version of the target-language synonyms (the hanzi and
+        # pinyin are the same in both; only the translation differs).
+        "SynonymsColored": process_synonyms(row[_lang_col("Synonyms", target_lang)]),
         _lang_col("Synonyms", target_lang): row[_lang_col("Synonyms", target_lang)],
         # Dictionary
         "DictionarySimplified": words_to_hanzi(dictionary_words),
@@ -100,6 +117,10 @@ def _transform_row(row: pd.Series, target_lang: str = DEFAULT_TARGET_LANG) -> di
         "DictionaryMeaning": row["DictionaryMeaning"],
         _lang_col("DictionaryMeaning", target_lang): row[_lang_col("DictionaryMeaning", target_lang)],
         "SourceLevel": row["SourceLevel"],
+        # Same pinyin with tone numbers (ai4hao4), so the typed-pinyin cards
+        # can accept and show either form.
+        "PinyinNumbered": pinyin_to_numbered(row["Pinyin"]),
+        GUID_COL: row[GUID_COL],
     }
 
 
@@ -124,18 +145,18 @@ def generate_flashcards(
     # fill NaN with empty string to avoid None issues downstream
     df = df.fillna("")
 
-    # optional columns (e.g. translations, SourceLevel) default to empty if absent
-    for col in optional_cols(target_lang) + PASSTHROUGH_OPTIONAL_COLS:
+    # optional columns (e.g. translations, SourceLevel, Guid) default to empty if absent
+    for col in optional_cols(target_lang) + PASSTHROUGH_OPTIONAL_COLS + [GUID_COL]:
         if col not in df.columns:
             df[col] = ""
 
     before = len(df)
-    df = df.drop_duplicates(subset=["Simplified", "Pinyin"], keep="first")
+    df = df.drop_duplicates(subset=DEDUP_KEY, keep="first")
     after = len(df)
     if after < before:
-        print(f"Removed {before - after:,} duplicate rows based on 'Simplified' + 'Pinyin'.")
+        print(f"Removed {before - after:,} duplicate rows based on {' + '.join(DEDUP_KEY)}.")
 
-    columns = output_columns(target_lang)
+    columns = output_columns(target_lang) + [GUID_COL]
     processed_rows = [_transform_row(row, target_lang) for _, row in df.iterrows()]
     out_df = pd.DataFrame(processed_rows, columns=columns)
 
