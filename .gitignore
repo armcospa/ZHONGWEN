@@ -11,16 +11,11 @@ __pycache__/
 build/
 dist/
 
-# Personal, machine-specific Anki review export (not source data)
-data/anki_reviews.csv
-
 # Generated intermediate files: regenerate with `zhongwen-anki`
 # (data/<level>/input.tsv is the curated source and stays tracked)
 data/*/output.tsv
 
 # Local-only material: printable vocabulary lists, reference PDFs and notes
-# on future work (see docs/local/README.md on your machine)
+# on future work, and the personal review-stats export and report written by
+# zhongwen-anki-export-stats / -analyze-stats (see docs/local/README.md)
 docs/local/
-
-# Personal review-stats report (zhongwen-anki-analyze-stats)
-data/report.html

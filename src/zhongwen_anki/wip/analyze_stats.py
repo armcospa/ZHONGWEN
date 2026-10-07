@@ -1,20 +1,20 @@
 """WORK IN PROGRESS -- not validated against real review data yet.
 
 See `zhongwen_anki.wip` package docstring: this module can change shape or be
-dropped. Once it's actually been run against a real `data/anki_reviews.csv`
+dropped. Once it's actually been run against a real `docs/local/estadisticas/anki_reviews.csv`
 and the report format is settled, promote it out of `wip/`.
 
 Turn the CSV from `export_stats.py` into a self-contained HTML learning report.
 
 Usage:
     zhongwen-anki-analyze-stats
-    zhongwen-anki-analyze-stats -i data/anki_reviews.csv -o data/report.html
+    zhongwen-anki-analyze-stats -i docs/local/estadisticas/anki_reviews.csv -o docs/local/estadisticas/report.html
 
 Intended workflow (most study happens on AnkiDroid, away from this repo):
     1. AnkiDroid -> sync -> AnkiWeb.
     2. Open Anki Desktop on the machine with this repo -> sync -> pulls the
        AnkiDroid reviews into the local collection.anki2.
-    3. `zhongwen-anki-export-stats` (refreshes data/anki_reviews.csv).
+    3. `zhongwen-anki-export-stats` (refreshes docs/local/estadisticas/anki_reviews.csv).
     4. `zhongwen-anki-analyze-stats` (this script; rebuilds the HTML report).
 
 Everything here is derived straight from the exported CSV with pandas; no
@@ -426,8 +426,8 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Build an HTML learning report from the CSV exported by zhongwen-anki-export-stats."
     )
-    parser.add_argument("-i", "--input", type=Path, default=Path("data/anki_reviews.csv"))
-    parser.add_argument("-o", "--output", type=Path, default=Path("data/report.html"))
+    parser.add_argument("-i", "--input", type=Path, default=Path("docs/local/estadisticas/anki_reviews.csv"))
+    parser.add_argument("-o", "--output", type=Path, default=Path("docs/local/estadisticas/report.html"))
     parser.add_argument(
         "--min-reviews", type=int, default=3,
         help="Minimum reviews for a word/card-type pair to appear in the 'hardest words' table.",

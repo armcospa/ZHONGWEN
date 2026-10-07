@@ -91,7 +91,7 @@ primeros conservan los `ord` 0–5 históricos; `P2H`, `HM2P`, `HP2M` y `Toda
 la información` se añadieron al final para no alterar ningún historial ya
 importado. Las respuestas de HSK2, HSK3 y HSK4 muestran en pequeño, arriba a
 la izquierda, el nivel en el que se incorporó la palabra. Consulta
-[`templates/README.md`](templates/README.md) para la relación completa con
+[`tarjetas/README.md`](tarjetas/README.md) para la relación completa con
 los archivos HTML.
 
 Las tarjetas de escritura de hanzi (`PM2H`, `M2H` y `P2H`) usan
@@ -157,7 +157,7 @@ AnkiMobile.
 
 Puedes hacer lo mismo con cualquier código: `H2M`, `M2H`, `PM2H`, `P2M`,
 `M2P`, `P2H`, `HM2P` o `HP2M`. El itinerario recomendado de cuatro mazos
-está en [`templates/template_mazos.txt`](templates/template_mazos.txt).
+está en [`tarjetas/template_mazos.txt`](tarjetas/template_mazos.txt).
 
 **Solución de problemas — "No se encontraron tarjetas coincidentes":**
 - Lo más probable es que tu colección de Anki todavía no tenga importada la versión del mazo que incluye ese código — reimporta el `.apkg` más reciente de [`decks/`](../decks/) primero.
@@ -208,8 +208,8 @@ en AnkiDroid:
 
 1. En AnkiDroid: sincroniza (icono de sincronización) para subir tus repasos a AnkiWeb.
 2. En el ordenador con Anki Desktop: sincroniza también (mismo icono, o `Y`), para bajar esos repasos al `collection.anki2` local.
-3. `zhongwen-anki-export-stats` (regenera `data/anki_reviews.csv` con todo lo nuevo).
-4. `zhongwen-anki-analyze-stats` (regenera `data/report.html`).
+3. `zhongwen-anki-export-stats` (regenera `docs/local/estadisticas/anki_reviews.csv` con todo lo nuevo).
+4. `zhongwen-anki-analyze-stats` (regenera `docs/local/estadisticas/report.html`).
 
 Como los repasos se acumulan (nunca se borran salvo que hagas `Forget`), es
 seguro repetir este flujo cuando quieras -- cada vez parte del historial
@@ -295,7 +295,7 @@ pone a mano cada vez.
 
 **Dos formas de combinarlo:**
 - *Itinerario recomendado* (el del README y
-  [`templates/template_mazos.txt`](templates/template_mazos.txt)): cada mazo
+  [`tarjetas/template_mazos.txt`](tarjetas/template_mazos.txt)): cada mazo
   filtrado lleva dos búsquedas, una de repasos (`is:due`) y otra de nuevas
   (`is:new`), y el mazo principal se deja con 0 nuevas y 0 repasos al día.
   Cada habilidad se repasa por separado y solo se estudian los tipos de

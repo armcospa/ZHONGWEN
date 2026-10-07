@@ -8,7 +8,7 @@ Para estudiar solo hace falta [Anki](https://apps.ankiweb.net/): no hay que inst
 
 | Significado → escribir hanzi | Hanzi + pinyin → significado | Respuesta de hanzi → pinyin | Consulta |
 |---|---|---|---|
-| ![M2H](resources/cards/m2h_front.png) | ![HP2M](resources/cards/hp2m_front.png) | ![H2P](resources/cards/h2p_back.png) | ![Toda la información](resources/cards/all_information.png) |
+| ![M2H](docs/images/m2h_front.png) | ![HP2M](docs/images/hp2m_front.png) | ![H2P](docs/images/h2p_back.png) | ![Toda la información](docs/images/all_information.png) |
 
 ## Descargas
 
@@ -68,7 +68,7 @@ El mazo de cada nivel sirve como almacén de notas, y se estudia desde un mazo f
 | Pinyin ← significado | `deck:"Chino - HSK*" card:M2P is:due` | `deck:"Chino - HSK1 (HSK 3.0)" card:M2P is:new` |
 | Significado ← hanzi y pinyin | `deck:"Chino - HSK*" card:HP2M is:due` | `deck:"Chino - HSK1 (HSK 3.0)" card:HP2M is:new` |
 
-Cuando termines un nivel, cambia `HSK1` por el siguiente en la búsqueda de nuevas. Estas cuatro rutas cubren el recuerdo gráfico, la producción del pinyin y la comprensión. Para entrenar otra dirección, crea otro mazo filtrado con el mismo patrón y el código correspondiente (`M2H`, `P2H`, `H2M`...). Las búsquedas para copiar y pegar están en [`docs/templates/template_mazos.txt`](docs/templates/template_mazos.txt).
+Cuando termines un nivel, cambia `HSK1` por el siguiente en la búsqueda de nuevas. Estas cuatro rutas cubren el recuerdo gráfico, la producción del pinyin y la comprensión. Para entrenar otra dirección, crea otro mazo filtrado con el mismo patrón y el código correspondiente (`M2H`, `P2H`, `H2M`...). Las búsquedas para copiar y pegar están en [`docs/tarjetas/template_mazos.txt`](docs/tarjetas/template_mazos.txt).
 
 ### Tarjeta «Toda la información»
 
@@ -160,8 +160,8 @@ Cómo funciona el pipeline, cómo añadir vocabulario o un nivel (con el prompt 
 ## Analizar tu progreso
 
 ```bash
-zhongwen-anki-export-stats --deck "HSK1" -o data/anki_reviews.csv
-zhongwen-anki-analyze-stats -i data/anki_reviews.csv -o data/report.html
+zhongwen-anki-export-stats --deck "HSK1" -o docs/local/estadisticas/anki_reviews.csv
+zhongwen-anki-analyze-stats -i docs/local/estadisticas/anki_reviews.csv -o docs/local/estadisticas/report.html
 ```
 
 El primero exporta cada repaso (acierto o fallo, tipo de tarjeta, etiquetas, tiempo, intervalo) desde el `collection.anki2` local. El segundo genera un informe HTML autocontenido con la precisión por tipo de tarjeta y por nivel, la tendencia de aciertos, la retención por intervalo, la precisión por día de la semana y las palabras más difíciles. **Es trabajo en curso**: está probado con datos sintéticos, pero todavía no con un historial real largo.
@@ -170,6 +170,6 @@ Si estudias sobre todo en AnkiDroid, sincroniza AnkiDroid → AnkiWeb → Anki D
 
 ## Créditos y licencia
 
-Basado en [`zhongwen-anki`](https://github.com/thomashirtz/zhongwen-anki) de Thomas Hirtz. Las tarjetas de escritura usan [HanziWriter](https://hanziwriter.org/) (MIT) y datos de trazos derivados de [Make Me a Hanzi](https://github.com/skishore/makemeahanzi) (Arphic Public License; ver [`card_template/hanzi_writer/NOTICE.md`](card_template/hanzi_writer/NOTICE.md)). Para construir listas de vocabulario mientras navegas es útil la extensión [Zhongwen](https://github.com/cschiller/zhongwen).
+Basado en [`zhongwen-anki`](https://github.com/thomashirtz/zhongwen-anki) de Thomas Hirtz. Las tarjetas de escritura usan [HanziWriter](https://hanziwriter.org/) (MIT) y datos de trazos derivados de [Make Me a Hanzi](https://github.com/skishore/makemeahanzi) (Arphic Public License; ver [`vendor/hanzi-writer/NOTICE.md`](vendor/hanzi-writer/NOTICE.md)). Para construir listas de vocabulario mientras navegas es útil la extensión [Zhongwen](https://github.com/cschiller/zhongwen).
 
 Distribuido bajo licencia MIT; ver [`LICENSE`](LICENSE).

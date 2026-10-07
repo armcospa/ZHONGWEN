@@ -6,7 +6,7 @@ done, joined with the deck name and the note's first field (the Chinese word).
 
 Usage:
     python -m zhongwen_anki.export_stats
-    python -m zhongwen_anki.export_stats --deck "HSK1" -o data/anki_reviews.csv
+    python -m zhongwen_anki.export_stats --deck "HSK1" -o docs/local/estadisticas/anki_reviews.csv
     python -m zhongwen_anki.export_stats --collection "C:\\path\\to\\collection.anki2"
 
 Notes on the Anki schema (kept raw on purpose, for faithful downstream analysis):
@@ -168,7 +168,7 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Export Anki review history (revlog) to CSV.")
     parser.add_argument("--collection", type=Path, default=None,
                          help="Path to collection.anki2 (auto-detected under %%APPDATA%%\\Anki2 if omitted).")
-    parser.add_argument("-o", "--output", type=Path, default=Path("data/anki_reviews.csv"))
+    parser.add_argument("-o", "--output", type=Path, default=Path("docs/local/estadisticas/anki_reviews.csv"))
     parser.add_argument("--deck", type=str, default=None,
                          help="Only include reviews from decks whose name contains this text.")
     return parser.parse_args()

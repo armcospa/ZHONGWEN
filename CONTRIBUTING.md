@@ -25,12 +25,13 @@ src/zhongwen_anki/
 card_template/
 ├── <código>/front.html, back.html   # una carpeta por tipo de tarjeta
 ├── _shared/                         # bloques comunes que se incluyen en las plantillas
-├── hanzi_writer/                    # HanziWriter + datos de trazos por carácter (fuente)
 └── styling.css
+vendor/hanzi-writer/     # HanziWriter + datos de trazos por carácter (terceros, ver NOTICE.md)
 data/hskN/input.tsv     # vocabulario de cada nivel (fuente de verdad)
 data/hskN/output.tsv    # generado, ignorado por git
 decks/HSKN.apkg         # mazos publicados
-docs/                   # documentación ampliada y especificación de tarjetas
+docs/                   # documentación: FUNCIONALIDADES.md, tarjetas/ (especificación
+                        # y mazos filtrados), images/ (capturas), local/ (ignorada)
 tests/
 ```
 
@@ -47,7 +48,7 @@ data/hskN/input.tsv --zhongwen-anki--> data/hskN/output.tsv --zhongwen-anki-buil
 
 ## Plantillas de tarjeta
 
-La especificación funcional (qué muestra y qué pide cada tarjeta) está en [`docs/templates/README.md`](docs/templates/README.md).
+La especificación funcional (qué muestra y qué pide cada tarjeta) está en [`docs/tarjetas/README.md`](docs/tarjetas/README.md).
 
 - Cada tipo de tarjeta tiene su carpeta en `card_template/` con `front.html` y `back.html`. La lista ordenada de tipos está en `TEMPLATES` (`build_deck.py`).
 - **Solo se añaden tipos al final de `TEMPLATES`.** Anki identifica las tarjetas de una nota por su posición (`ord`): reordenar o insertar en medio haría que el historial de una tarjeta pasara a otra. Al añadir uno, actualiza también `CARD_TYPE_BY_ORD` (`export_stats.py`), `CARD_TYPE_DESCRIPTIONS` (`wip/analyze_stats.py`), `EXPECTED_TEMPLATE_NAMES` (`tests/test_build_deck.py`) y la documentación.
@@ -64,7 +65,7 @@ La especificación funcional (qué muestra y qué pide cada tarjeta) está en [`
 | `pinyin_hint` | Pista en la caja de texto del anverso de `H2P`, `M2P` y `HM2P` (`àihào / ai4hao4`) |
 | `pinyin_check` | Recorrige en el reverso la respuesta de `{{type:Pinyin}}`: acepta tildes o números, ignora mayúsculas, espacios y apóstrofos, y muestra la solución en el formato que más usó el estudiante. Lee lo escrito de la comparación de Anki (`#typeans`) y, si no la encuentra, deja la de Anki. Contiene la lista de sílabas válidas del pinyin, que `tests/test_pinyin_check.py` compara con la de Python. |
 
-- HanziWriter y los datos de trazos van incrustados en la plantilla, no como ficheros multimedia, porque el webview de Anki (sobre todo AnkiDroid) no siempre carga a tiempo los recursos externos. Ver [`card_template/hanzi_writer/NOTICE.md`](card_template/hanzi_writer/NOTICE.md).
+- HanziWriter y los datos de trazos van incrustados en la plantilla, no como ficheros multimedia, porque el webview de Anki (sobre todo AnkiDroid) no siempre carga a tiempo los recursos externos. Ver [`vendor/hanzi-writer/NOTICE.md`](vendor/hanzi-writer/NOTICE.md).
 - Los textos `{{CampoES}}` se reescriben a `{{CampoXX}}` cuando se construye con `--target-lang XX`.
 - Las fuentes se definen como variables CSS al principio de `styling.css` (`--font-kai`, `--font-song`, `--font-pinyin`, `--font-latin`, `--font-ui`): cada una es una lista con la fuente original de Windows y sus equivalentes en macOS/iOS, Linux y Android, terminada en una familia genérica.
 - El campo `PinyinNumbered` (`ai4hao4`, tono neutro `5`) lo calcula `utilities.pinyin_to_numbered` a partir de `Pinyin`, segmentando en sílabas válidas.
@@ -114,7 +115,7 @@ df.to_csv(path, sep="\t", index=False)
 1. Prepara la lista de palabras del nivel (por ejemplo, la lista oficial del HSK 3.0).
 2. Genera el `input.tsv` con un LLM usando el prompt de abajo y guárdalo en `data/hskN/input.tsv`. Revisa el resultado: pinyin, significados y, sobre todo, que haya sinónimos (en HSK3 el LLM los dejó casi todos vacíos).
 3. Si el nivel es nuevo, añade un ID estable para él en `DECK_IDS` (`build_deck.py`). No cambies nunca el ID de un nivel ya publicado: Anki identifica los mazos por ese ID.
-4. Si hay caracteres sin datos de trazos, el paso siguiente falla y los enumera. Descárgalos con `npm install hanzi-writer-data` y copia los `<carácter>.json` de `node_modules/hanzi-writer-data/` a `card_template/hanzi_writer/data/`.
+4. Si hay caracteres sin datos de trazos, el paso siguiente falla y los enumera. Descárgalos con `npm install hanzi-writer-data` y copia los `<carácter>.json` de `node_modules/hanzi-writer-data/` a `vendor/hanzi-writer/data/`.
 5. Ejecuta `zhongwen-anki-build-all`, comprueba que `pytest` pasa y escribe un `data/hskN/README.md` como el de los demás niveles.
 
 Para palabras con varias acepciones con la misma lectura (生 *shēng*: «dar a luz» / «crudo»), usa una fila por acepción. Solo se consideran duplicadas las filas con el mismo `Simplified`, `Pinyin` **y** `Meaning`.
@@ -187,4 +188,4 @@ Después, une las columnas al `input.tsv` por la columna `Simplified` y en el mi
 
 ## Material local
 
-`docs/local/` está ignorada por git: guarda allí lo que no se publica (listados imprimibles, PDFs de referencia, notas de trabajo futuro).
+`docs/local/` está ignorada por git: guarda allí lo que no se publica (listados imprimibles, PDFs de referencia, notas de trabajo futuro y, en `docs/local/estadisticas/`, tu historial de repasos y su informe, que es donde los escriben por defecto `zhongwen-anki-export-stats` y `zhongwen-anki-analyze-stats`).
