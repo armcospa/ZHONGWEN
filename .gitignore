@@ -1,6 +1,8 @@
 # IDE / environment
 .idea
 .venv/
+.claude/
+.kilo/
 
 # Python build artifacts
 __pycache__/
@@ -16,6 +18,9 @@ data/anki_reviews.csv
 # (data/<level>/input.tsv is the curated source and stays tracked)
 data/*/output.tsv
 
-# Scratch/reference PDFs used while building vocabulary lists, not source data
-data/pdfs/
-data/raw/
+# Local-only material: printable vocabulary lists, reference PDFs and notes
+# on future work (see docs/local/README.md on your machine)
+docs/local/
+
+# Personal review-stats report (zhongwen-anki-analyze-stats)
+data/report.html
