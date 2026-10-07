@@ -1,9 +1,12 @@
+import pytest
+
 from zhongwen_anki.utilities import (
     process_synonyms,
     sentence_to_words,
     words_to_colored_hanzi,
     words_to_hanzi,
     words_to_pinyin,
+    pinyin_to_numbered,
 )
 
 
@@ -48,3 +51,31 @@ def test_process_synonyms_colors_hanzi_but_keeps_surrounding_text():
 
 def test_process_synonyms_empty_string_returns_empty_string():
     assert process_synonyms("") == ""
+
+
+@pytest.mark.parametrize("marked, numbered", [
+    ("àihào", "ai4hao4"),
+    ("bà ba", "ba4 ba5"),
+    ("Yàzhōu", "Ya4zhou1"),
+    ("xī'ān", "xi1'an1"),
+    ("lǜsè", "lü4se4"),
+    ("nǚ'ér", "nü3'er2"),
+    ("hóng-lǜdēng", "hong2-lü4deng1"),
+    ("hǎo wánr", "hao3 wanr2"),
+    ("ǹg", "ng4"),
+    ("láidejí", "lai2de5ji2"),
+    ("fāng'àn", "fang1'an4"),
+])
+def test_pinyin_to_numbered(marked, numbered):
+    assert pinyin_to_numbered(marked) == numbered
+
+
+def test_pinyin_to_numbered_returns_empty_for_non_pinyin():
+    assert pinyin_to_numbered("qwrtz") == ""
+
+
+def test_words_to_pinyin_attaches_punctuation_to_the_previous_word():
+    pinyin = words_to_pinyin(sentence_to_words("他说：“你好！”我们走吧。"))
+    assert " 。" not in pinyin and " ！" not in pinyin and " ：" not in pinyin
+    assert pinyin.endswith("ba。")
+    assert "“nǐhǎo！”" in pinyin

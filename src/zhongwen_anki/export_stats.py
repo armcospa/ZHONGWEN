@@ -6,7 +6,7 @@ done, joined with the deck name and the note's first field (the Chinese word).
 
 Usage:
     python -m zhongwen_anki.export_stats
-    python -m zhongwen_anki.export_stats --deck "HSK1" -o data/anki_reviews.csv
+    python -m zhongwen_anki.export_stats --deck "HSK1" -o docs/local/estadisticas/anki_reviews.csv
     python -m zhongwen_anki.export_stats --collection "C:\\path\\to\\collection.anki2"
 
 Notes on the Anki schema (kept raw on purpose, for faithful downstream analysis):
@@ -39,18 +39,22 @@ from typing import Optional
 EASE_LABELS = {1: "Again", 2: "Hard", 3: "Good", 4: "Easy"}
 REVIEW_TYPE_LABELS = {0: "learning", 1: "review", 2: "relearning", 3: "cram/filtered", 4: "manual"}
 
-# cards.ord (0-3) -> template name. Hardcoded rather than read from the
+# cards.ord -> template name. Hardcoded rather than read from the
 # collection's notetype tables because this project only ever writes one
 # shared model (see build_deck.build_model's `templates=[...]`, which must be
 # kept in sync with this) -- reading it back from Anki's own schema would
 # have to handle several incompatible schema versions for no real benefit.
 CARD_TYPE_BY_ORD = {
-    0: "Hanzi -> Significado",
-    1: "Significado -> Hanzi",
-    2: "Escribir Pinyin",
-    3: "Escribir Hanzi",
-    4: "Pinyin -> Significado",
-    5: "Significado -> Pinyin",
+    0: "H2M",
+    1: "M2H",
+    2: "H2P",
+    3: "PM2H",
+    4: "P2M",
+    5: "M2P",
+    6: "P2H",
+    7: "HM2P",
+    8: "HP2M",
+    9: "Toda la información",
 }
 
 
@@ -164,7 +168,7 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Export Anki review history (revlog) to CSV.")
     parser.add_argument("--collection", type=Path, default=None,
                          help="Path to collection.anki2 (auto-detected under %%APPDATA%%\\Anki2 if omitted).")
-    parser.add_argument("-o", "--output", type=Path, default=Path("data/anki_reviews.csv"))
+    parser.add_argument("-o", "--output", type=Path, default=Path("docs/local/estadisticas/anki_reviews.csv"))
     parser.add_argument("--deck", type=str, default=None,
                          help="Only include reviews from decks whose name contains this text.")
     return parser.parse_args()

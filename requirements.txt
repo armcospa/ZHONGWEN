@@ -3,4 +3,4 @@
 #   pip install -e ".[deck,test]"
 jieba==0.42.1
 pypinyin==0.55.0
-pandas==2.2.3
+pandas==2.3.3

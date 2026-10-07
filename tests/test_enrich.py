@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from zhongwen_anki.enrich import OUTPUT_COLUMNS, REQUIRED_COLS, generate_flashcards, output_columns
+from zhongwen_anki.enrich import GUID_COL, OUTPUT_COLUMNS, REQUIRED_COLS, generate_flashcards, output_columns
 
 
 def _write_tsv(path, rows, columns):
@@ -21,7 +21,7 @@ def test_generate_flashcards_basic(tmp_path):
     generate_flashcards(input_path, output_path)
 
     out = pd.read_csv(output_path, sep="\t", dtype=str).fillna("")
-    assert list(out.columns) == OUTPUT_COLUMNS
+    assert list(out.columns) == OUTPUT_COLUMNS + [GUID_COL]
     assert len(out) == 1
     row = out.iloc[0]
     assert row["Simplified"] == "你好"
@@ -100,6 +100,52 @@ def test_generate_flashcards_supports_a_custom_target_lang(tmp_path):
     generate_flashcards(input_path, output_path, target_lang="FR")
 
     out = pd.read_csv(output_path, sep="\t", dtype=str).fillna("")
-    assert list(out.columns) == output_columns("FR")
+    assert list(out.columns) == output_columns("FR") + [GUID_COL]
     assert out.iloc[0]["MeaningFR"] == "bonjour"
     assert "MeaningES" not in out.columns
+
+
+def test_generate_flashcards_keeps_different_senses_with_the_same_reading(tmp_path):
+    """生 shēng "to give birth" and 生 shēng "raw" are two vocabulary
+    entries: only an exact (Simplified, Pinyin, Meaning) match is a dup."""
+    input_path = tmp_path / "input.tsv"
+    output_path = tmp_path / "output.tsv"
+    row_a = ["生", "生", "shēng", "to give birth", "她生了一个女儿。", "She gave birth to a daughter.", "", "出生", "to be born"]
+    row_b = ["生", "生", "shēng", "raw, uncooked", "这块肉还是生的。", "This meat is still raw.", "", "没有煮熟", "not cooked"]
+    _write_tsv(input_path, [row_a, row_b], REQUIRED_COLS)
+
+    generate_flashcards(input_path, output_path)
+
+    out = pd.read_csv(output_path, sep="	", dtype=str)
+    assert list(out["Meaning"]) == ["to give birth", "raw, uncooked"]
+
+
+def test_generate_flashcards_passes_the_frozen_guid_through(tmp_path):
+    input_path = tmp_path / "input.tsv"
+    output_path = tmp_path / "output.tsv"
+    row = ["你好", "你好", "nǐ hǎo", "hello", "你好。", "Hello.", "", "问候语", "greeting", "abc123"]
+    _write_tsv(input_path, [row], REQUIRED_COLS + [GUID_COL])
+
+    generate_flashcards(input_path, output_path)
+
+    out = pd.read_csv(output_path, sep="	", dtype=str)
+    assert out.iloc[0][GUID_COL] == "abc123"
+
+
+def test_synonyms_colored_uses_the_target_language(tmp_path):
+    """The colored synonyms replace the plain target-language ones on the
+    cards, so they must carry the same (target-language) translations."""
+    input_path = tmp_path / "input.tsv"
+    output_path = tmp_path / "output.tsv"
+    columns = REQUIRED_COLS + ["SynonymsES"]
+    row = ["全部", "全部", "quánbù", "all", "全部来了。", "All came.",
+           "全部 (quán bù) - all, everything", "所有", "all",
+           "全部 (quán bù) - todo, la totalidad"]
+    _write_tsv(input_path, [row], columns)
+
+    generate_flashcards(input_path, output_path)
+
+    colored = pd.read_csv(output_path, sep="\t", dtype=str).iloc[0]["SynonymsColored"]
+    assert "todo, la totalidad" in colored
+    assert "everything" not in colored
+    assert "tone-" in colored

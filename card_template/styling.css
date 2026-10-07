@@ -1,3 +1,21 @@
+/* Font stacks. The first choice of each is the original design (Windows);
+   the rest are the closest equivalents on macOS/iOS, Linux and Android, so
+   no platform falls back to an arbitrary font:
+   - Kai (handwritten-style hanzi): Windows KaiTi, macOS/iOS Kaiti SC/STKaiti,
+     Linux AR PL UKai, LXGW WenKai if installed. Android has no Kai font and
+     its WebView mostly resolves only generic families, so it ends at
+     `serif` (the system CJK font). Every stack ends in a generic family.
+   - Song (sentences, definitions): SimSun, Songti SC/STSong, Noto Serif CJK.
+   - Pinyin: needs every tone-marked vowel (ǎ, ǖ, ǚ...): Gentium Plus/Charis
+     SIL if installed, else Noto Serif or Times New Roman, which have them all.
+   - Latin (meanings): Georgia, else Noto Serif / Times New Roman. */
+:root {
+    --font-kai: KaiTi, "Kaiti SC", STKaiti, "AR PL UKai CN", "LXGW WenKai", "Noto Serif CJK SC", "Source Han Serif SC", serif;
+    --font-song: SimSun, "Songti SC", STSong, "Noto Serif CJK SC", "Source Han Serif SC", "AR PL UMing CN", serif;
+    --font-pinyin: "Gentium Plus", "Charis SIL", "Noto Serif", "Times New Roman", serif;
+    --font-latin: Georgia, "Noto Serif", "Times New Roman", serif;
+    --font-ui: Arial, "Noto Sans", Roboto, Helvetica, sans-serif;
+}
 
 a{color: inherit ; text-decoration: none}
 
@@ -9,49 +27,63 @@ mark.tone-3 {color:#f97b00; background: none;}
 mark.tone-4 {color:#d52e29; background: none;}
 mark.tone-5 {color:#9e9e9e; background: none;}
 
-.card {font-family: arial; font-size: 10px; text-align: left; color:#222222; background-color: #fdf6e3;}
+.card {font-family: var(--font-ui); font-size: 10px; text-align: left; color:#222222; background-color: #fdf6e3;}
 
-.mainCharacters {font-family: Kaiti; font-size: 78px}
-.mainCharactersColored {font-family: Kaiti; font-size: 78px}
+.mainCharacters {font-family: var(--font-kai); font-size: 78px}
+.mainCharactersColored {font-family: var(--font-kai); font-size: 78px}
 
-.secondaryCharacters {font-family: Kaiti; font-size: 25pt; color:grey}
-.secondaryCharactersColored {font-family: Kaiti; font-size: 25pt; color:grey}
+.secondaryCharacters {font-family: var(--font-kai); font-size: 25pt; color:grey}
+.secondaryCharactersColored {font-family: var(--font-kai); font-size: 25pt; color:grey}
 
-.pinyin {font-family: Gentium Plus; font-size: 22px; color: #FFAAFF; visibility: visible; word-break: break-all;}
-.pinyinHidden {font-family: Gentium Plus; font-size: 22px; color: #FFAAFF; visibility: hidden; word-break: break-all;}
+.pinyin {font-family: var(--font-pinyin); font-size: 22px; color: #FFAAFF; visibility: visible; word-break: break-all;}
+.pinyinHidden {font-family: var(--font-pinyin); font-size: 22px; color: #FFAAFF; visibility: hidden; word-break: break-all;}
 
-.meaning{font-family: Georgia; font-size: 16px;}
+.meaning{font-family: var(--font-latin); font-size: 16px;}
 
-.en-secondary{font-family: Georgia; font-size: 12px; color: grey; font-style: italic;}
+.en-secondary{font-family: var(--font-latin); font-size: 12px; color: grey; font-style: italic;}
 
-.sentence{font-family: SimSun; font-size:24px; text-align:left; ; color:grey; display: block}
-.sentenceColored{font-family: SimSun; font-size:24px; text-align:left; ; color:grey; display: none}
+.sentence{font-family: var(--font-song); font-size:24px; text-align:left; ; color:grey; display: block}
+.sentenceColored{font-family: var(--font-song); font-size:24px; text-align:left; ; color:grey; display: none}
 
-.sentencePinyin {font-family: Gentium Plus; font-size: 20px; color: #FFAAFF; text-align:left; visibility: visible; word-break: break-all;}
-.sentencePinyinHidden {font-family: Gentium Plus; font-size: 20px; color: #FFAAFF; text-align:left; visibility: hidden; word-break: break-all;}
-.sentenceMeaning{font-family: Georgia; font-size: 16px;  text-align:left}
+.sentencePinyin {font-family: var(--font-pinyin); font-size: 20px; color: #FFAAFF; text-align:left; visibility: visible; word-break: break-all;}
+.sentencePinyinHidden {font-family: var(--font-pinyin); font-size: 20px; color: #FFAAFF; text-align:left; visibility: hidden; word-break: break-all;}
+.sentenceMeaning{font-family: var(--font-latin); font-size: 16px;  text-align:left}
 
-.dictionary{font-family: SimSun; font-size:24px; text-align:left; ; color:grey; display: block}
-.dictionaryColored{font-family: SimSun; font-size:24px; text-align:left; ; color:grey; display: none}
+.dictionary{font-family: var(--font-song); font-size:24px; text-align:left; ; color:grey; display: block}
+.dictionaryColored{font-family: var(--font-song); font-size:24px; text-align:left; ; color:grey; display: none}
 
-.dictionaryPinyin {font-family: Gentium Plus; font-size: 20px; color: #FFAAFF; text-align:left; visibility: visible; word-break: break-all;}
-.dictionaryPinyinHidden {font-family: Gentium Plus; font-size: 20px; color: #FFAAFF; text-align:left; visibility: hidden; word-break: break-all;}
-.dictionaryMeaning{font-family: Georgia; font-size: 16px;  text-align:left}
+.dictionaryPinyin {font-family: var(--font-pinyin); font-size: 20px; color: #FFAAFF; text-align:left; visibility: visible; word-break: break-all;}
+.dictionaryPinyinHidden {font-family: var(--font-pinyin); font-size: 20px; color: #FFAAFF; text-align:left; visibility: hidden; word-break: break-all;}
+.dictionaryMeaning{font-family: var(--font-latin); font-size: 16px;  text-align:left}
 
 
-.synonyms{font-family: SimSun; font-size:20px; text-align:left; color:grey; display: block}
-.synonymsColored{font-family: SimSun; font-size:20px; text-align:left; color:grey; display: none}
+.synonyms{font-family: var(--font-song); font-size:20px; text-align:left; color:grey; display: block}
+.synonymsColored{font-family: var(--font-song); font-size:20px; text-align:left; color:grey; display: none}
+
+/* Typed-answer comparison in H2P/M2P/HM2P cards: slightly larger for readability */
+#typeans,
+#typeans:empty,
+.typeGood,
+.typeBad,
+.typeMissed {
+    font-family: var(--font-pinyin);
+    font-size: 20px;
+    line-height: 1.35;
+}
 
 .bottomcontrols{bottom: 13px; position: fixed; left: 0; right: 0; margin-left: auto; margin-right: auto; width:380px;border: 5px solid #3c3c3c; background-color: #3c3c3c !Important;overflow:hidden;text-align: center; color: lightgrey}
 
-/* Filtered-deck (chinese_to_english / pinyin_to_meaning / english_to_chinese)
-   headword-only fronts and primary/secondary backs. New classes only --
-   existing rules above are left untouched so hanzi_writing and
-   pinyin_writing keep their current look. */
+/* Level a word was introduced in (SourceLevel field), shown small in the
+   top-left corner of every answer so it never competes with the content.
+   HSK1 is the base level, so it is not labelled. */
+.levelBadge {position: absolute; top: 4px; left: 8px; font-family: var(--font-ui); font-size: 11px; color: #9e9e9e; letter-spacing: 0.5px; pointer-events: none;}
+.levelBadge:empty, .levelBadge[data-level="HSK1"] {display: none;}
+
+/* Headword-only fronts and primary/secondary backs shared by the card types. */
 .center {text-align: center;}
-.meaningPrimary {font-family: Georgia; font-size: 22px;}
-.pinyinPrimary {font-family: Gentium Plus; font-size: 40px; color: #FFAAFF; word-break: break-all;}
-.controlPleco{font-family: Georgia; font-size: 14px;  display:inline-block; margin-right:0px;}
-.controlSoundSentence{font-family: Georgia; font-size: 14px;  display:inline-block; margin-right:0px; display:inline-block;width:40px;border: 0px solid #000; text-align: center}
-.controlSoundWord{font-family: Georgia; font-size: 14px;  display:inline-block; margin-right:0px;display:inline-block;width:40px;border: 0px solid #000; text-align: center}
-.controlHide{font-family: Georgia; font-size: 14px;  display:inline-block; margin-right:0px; font-weight: bold;}
+.meaningPrimary {font-family: var(--font-latin); font-size: 22px;}
+.pinyinPrimary {font-family: var(--font-pinyin); font-size: 40px; color: #FFAAFF; word-break: break-all;}
+.controlPleco{font-family: var(--font-latin); font-size: 14px;  display:inline-block; margin-right:0px;}
+.controlSoundSentence{font-family: var(--font-latin); font-size: 14px;  display:inline-block; margin-right:0px; display:inline-block;width:40px;border: 0px solid #000; text-align: center}
+.controlSoundWord{font-family: var(--font-latin); font-size: 14px;  display:inline-block; margin-right:0px;display:inline-block;width:40px;border: 0px solid #000; text-align: center}
+.controlHide{font-family: var(--font-latin); font-size: 14px;  display:inline-block; margin-right:0px; font-weight: bold;}

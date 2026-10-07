@@ -1,0 +1,54 @@
+<div id="hanziAnswerBox" data-word="{{Simplified}}" style="display:flex; overflow-x:auto; border:2px solid #999; background:#fff; margin:10px auto 0 auto; width:fit-content; max-width:100%;"></div>
+
+<script>
+function _hanziAnswerInit() {
+    var container = document.getElementById('hanziAnswerBox');
+    if (!container) return;
+    var word = container.getAttribute('data-word');
+    var chars = Array.from(word);
+    var cellSize = 170;
+
+    function loader(char, onLoad, onError) {
+        var data = (typeof HANZI_DATA !== 'undefined') ? HANZI_DATA[char] : null;
+        if (data) {
+            onLoad(data);
+        } else if (onError) {
+            onError('missing data for ' + char);
+        }
+    }
+
+    var writers = chars.map(function (char, i) {
+        var cell = document.createElement('div');
+        cell.id = 'hanziAnswerCell' + i;
+        cell.style.width = cellSize + 'px';
+        cell.style.height = cellSize + 'px';
+        cell.style.flex = '0 0 auto';
+        if (i > 0) cell.style.borderLeft = '1px dashed #ccc';
+        container.appendChild(cell);
+
+        return HanziWriter.create(cell.id, char, {
+            width: cellSize,
+            height: cellSize,
+            padding: 5,
+            showCharacter: false,
+            charDataLoader: loader,
+        });
+    });
+
+    // Animate one character at a time (not all at once), left to right.
+    function animateNext(i) {
+        if (i >= writers.length) return;
+        writers[i].animateCharacter({
+            onComplete: function () {
+                animateNext(i + 1);
+            },
+        });
+    }
+    animateNext(0);
+}
+if (document.readyState === 'complete') {
+    _hanziAnswerInit();
+} else {
+    window.addEventListener('load', _hanziAnswerInit);
+}
+</script>

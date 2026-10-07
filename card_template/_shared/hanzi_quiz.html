@@ -1,0 +1,64 @@
+<div id="hanziQuizBox" data-word="{{Simplified}}" style="display:flex; overflow-x:auto; border:2px solid #999; background:#fff; margin:10px auto 0 auto; width:fit-content; max-width:100%;"></div>
+<div id="hanziQuizStatus" style="text-align:center; font-family: var(--font-latin); font-size:14px; color:grey; margin-top:6px;">Dibuja cada trazo con el ratón o el dedo.</div>
+
+<script>
+function _hanziQuizInit() {
+    var container = document.getElementById('hanziQuizBox');
+    var status = document.getElementById('hanziQuizStatus');
+    if (!container) return;
+    var word = container.getAttribute('data-word');
+    var chars = Array.from(word);
+    var total = chars.length;
+    var done = 0;
+    var mistakes = 0;
+    var cellSize = 170;
+
+    function loader(char, onLoad, onError) {
+        var data = (typeof HANZI_DATA !== 'undefined') ? HANZI_DATA[char] : null;
+        if (data) {
+            onLoad(data);
+        } else if (onError) {
+            onError('missing data for ' + char);
+        }
+    }
+
+    chars.forEach(function (char, i) {
+        var cell = document.createElement('div');
+        cell.id = 'hanziCell' + i;
+        cell.style.width = cellSize + 'px';
+        cell.style.height = cellSize + 'px';
+        cell.style.flex = '0 0 auto';
+        cell.style.touchAction = 'none';
+        cell.style.userSelect = 'none';
+        if (i > 0) cell.style.borderLeft = '1px dashed #ccc';
+        container.appendChild(cell);
+
+        var writer = HanziWriter.create(cell.id, char, {
+            width: cellSize,
+            height: cellSize,
+            padding: 5,
+            showCharacter: false,
+            showOutline: false,
+            strokeAnimationSpeed: 1,
+            delayBetweenStrokes: 100,
+            charDataLoader: loader,
+        });
+
+        writer.quiz({
+            onComplete: function (summary) {
+                done += 1;
+                mistakes += summary.totalMistakes;
+                status.innerText = done + ' / ' + total + ' caracteres completados (fallos totales: ' + mistakes + ')';
+            },
+        });
+    });
+}
+// Some Anki webviews (notably AnkiDroid) may run this inline script before
+// the page/DOM is fully settled. Deferring to the 'load' event, following
+// the pattern used by github.com/krmanik/Anki-xiehanzi, avoids that race.
+if (document.readyState === 'complete') {
+    _hanziQuizInit();
+} else {
+    window.addEventListener('load', _hanziQuizInit);
+}
+</script>

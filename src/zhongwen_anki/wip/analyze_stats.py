@@ -1,20 +1,20 @@
 """WORK IN PROGRESS -- not validated against real review data yet.
 
 See `zhongwen_anki.wip` package docstring: this module can change shape or be
-dropped. Once it's actually been run against a real `data/anki_reviews.csv`
+dropped. Once it's actually been run against a real `docs/local/estadisticas/anki_reviews.csv`
 and the report format is settled, promote it out of `wip/`.
 
 Turn the CSV from `export_stats.py` into a self-contained HTML learning report.
 
 Usage:
     zhongwen-anki-analyze-stats
-    zhongwen-anki-analyze-stats -i data/anki_reviews.csv -o data/report.html
+    zhongwen-anki-analyze-stats -i docs/local/estadisticas/anki_reviews.csv -o docs/local/estadisticas/report.html
 
 Intended workflow (most study happens on AnkiDroid, away from this repo):
     1. AnkiDroid -> sync -> AnkiWeb.
     2. Open Anki Desktop on the machine with this repo -> sync -> pulls the
        AnkiDroid reviews into the local collection.anki2.
-    3. `zhongwen-anki-export-stats` (refreshes data/anki_reviews.csv).
+    3. `zhongwen-anki-export-stats` (refreshes docs/local/estadisticas/anki_reviews.csv).
     4. `zhongwen-anki-analyze-stats` (this script; rebuilds the HTML report).
 
 Everything here is derived straight from the exported CSV with pandas; no
@@ -42,15 +42,31 @@ GRID = "#e1e0d9"
 SURFACE = "#fcfcfb"
 BLUE = "#2a78d6"
 
-# One fixed hue per card type (categorical, identity) -- reused in every
-# chart that breaks results down by card type.
-CARD_TYPE_COLORS = {
-    "Hanzi -> Significado": "#2a78d6",
-    "Significado -> Hanzi": "#eb6834",
-    "Escribir Pinyin": "#1baf7a",
-    "Escribir Hanzi": "#eda100",
+# What each card type asks, used to label the card-type chart. The bars are
+# already named on the axis, so they share one color instead of ten hues.
+CARD_TYPE_DESCRIPTIONS = {
+    "H2M": "hanzi → significado",
+    "M2H": "significado → escribir hanzi",
+    "H2P": "hanzi → escribir pinyin",
+    "PM2H": "pinyin + significado → escribir hanzi",
+    "P2M": "pinyin → significado",
+    "M2P": "significado → escribir pinyin",
+    "P2H": "pinyin → escribir hanzi",
+    "HM2P": "hanzi + significado → escribir pinyin",
+    "HP2M": "hanzi + pinyin → significado",
+    "Toda la información": "consulta",
 }
-DEFAULT_CARD_TYPE_COLOR = "#898781"
+
+# Card type names used before the H/P/M codes (CSV exports from older
+# versions of export_stats), mapped to the code of the same template ord.
+LEGACY_CARD_TYPES = {
+    "Hanzi -> Significado": "H2M",
+    "Significado -> Hanzi": "M2H",
+    "Escribir Pinyin": "H2P",
+    "Escribir Hanzi": "PM2H",
+    "Pinyin -> Significado": "P2M",
+    "Significado -> Pinyin": "M2P",
+}
 
 # Single-hue ramp, light->dark, for ordinal/magnitude series (e.g. retention
 # by increasing interval length).
@@ -86,7 +102,7 @@ def load(csv_path: Path) -> pd.DataFrame:
     if "card_type" not in df.columns:
         # CSV exported before card_type existed (see export_stats.py).
         df["card_type"] = "Desconocido"
-    df["card_type"] = df["card_type"].fillna("Desconocido")
+    df["card_type"] = df["card_type"].fillna("Desconocido").replace(LEGACY_CARD_TYPES)
     df["level"] = df["deck"].fillna("").map(_level_from_deck)
     return df
 
@@ -200,9 +216,12 @@ def _style_ax(ax, x_grid: bool = False) -> None:
 
 
 def chart_accuracy_by_card_type(g: pd.DataFrame) -> str:
-    fig, ax = plt.subplots(figsize=(6.6, 0.7 * len(g) + 1))
-    colors = [CARD_TYPE_COLORS.get(t, DEFAULT_CARD_TYPE_COLOR) for t in g["card_type"]]
-    bars = ax.barh(g["card_type"], g["accuracy"] * 100, color=colors, height=0.55, zorder=3)
+    fig, ax = plt.subplots(figsize=(7.2, 0.45 * len(g) + 1))
+    labels = [
+        f"{t} · {CARD_TYPE_DESCRIPTIONS[t]}" if t in CARD_TYPE_DESCRIPTIONS else t
+        for t in g["card_type"]
+    ]
+    bars = ax.barh(labels, g["accuracy"] * 100, color=BLUE, height=0.55, zorder=3)
     ax.set_xlim(0, 100)
     ax.set_xlabel("Precisión (%)")
     _style_ax(ax, x_grid=True)
@@ -382,8 +401,9 @@ def build_report_html(df: pd.DataFrame, min_reviews: int = 3) -> str:
 <div class="stats-row">{stats}</div>
 
 <h2>Precisión por tipo de tarjeta</h2>
-<p class="muted">En qué habilidad conviene incidir: lectura (Hanzi -> Significado), producción
-(Significado -> Hanzi), ortografía (Escribir Pinyin) o escritura a mano (Escribir Hanzi).</p>
+<p class="muted">En qué habilidad conviene incidir. Cada código indica qué se muestra y qué
+se pide: H = hanzi, P = pinyin, M = significado (p. ej. PM2H: a partir del pinyin y el
+significado, escribir el hanzi).</p>
 <img class="chart" src="{chart_accuracy_by_card_type(by_card_type)}" alt="Precisión por tipo de tarjeta">
 
 {level_section}
@@ -406,8 +426,8 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Build an HTML learning report from the CSV exported by zhongwen-anki-export-stats."
     )
-    parser.add_argument("-i", "--input", type=Path, default=Path("data/anki_reviews.csv"))
-    parser.add_argument("-o", "--output", type=Path, default=Path("data/report.html"))
+    parser.add_argument("-i", "--input", type=Path, default=Path("docs/local/estadisticas/anki_reviews.csv"))
+    parser.add_argument("-o", "--output", type=Path, default=Path("docs/local/estadisticas/report.html"))
     parser.add_argument(
         "--min-reviews", type=int, default=3,
         help="Minimum reviews for a word/card-type pair to appear in the 'hardest words' table.",

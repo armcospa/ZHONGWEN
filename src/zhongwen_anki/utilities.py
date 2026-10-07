@@ -1,9 +1,99 @@
 import html
+import re
+import unicodedata
 from dataclasses import dataclass
-from typing import List
+from functools import lru_cache
+from typing import List, Optional
 
 import jieba
 from pypinyin import Style, pinyin as _pinyin
+from pypinyin.contrib.tone_convert import to_normal
+from pypinyin.pinyin_dict import pinyin_dict
+
+# Combining diacritics of the four pinyin tones (in NFD form).
+_TONE_BY_MARK = {"̄": 1, "́": 2, "̌": 3, "̀": 4}
+_DIAERESIS = "̈"
+_LETTERS_RE = re.compile(r"[^\W\d_]+")
+
+
+@lru_cache(maxsize=1)
+def _pinyin_syllables() -> frozenset:
+    """Every valid toneless pinyin syllable (with ü), e.g. "zhuang", "lü", "ng"."""
+    # pypinyin spells ü as "v" in its toneless form (lv, nve).
+    return frozenset(
+        to_normal(reading).replace("v", "ü")
+        for readings in pinyin_dict.values()
+        for reading in readings.split(",")
+    )
+
+
+def _split_tones(word: str) -> tuple:
+    """"Àihào" -> ("Aihao", [4, 0, 0, 0, 4, 0]): letters without tone marks
+    (keeping ü) and the tone carried by each letter (0 = none)."""
+    letters, tones = [], []
+    for char in word:
+        base, *marks = unicodedata.normalize("NFD", char)
+        if _DIAERESIS in marks:
+            base = unicodedata.normalize("NFC", base + _DIAERESIS)
+        letters.append(base)
+        tones.append(next((_TONE_BY_MARK[m] for m in marks if m in _TONE_BY_MARK), 0))
+    return "".join(letters), tones
+
+
+def _segment(letters: str, tones: List[int]) -> Optional[List[tuple]]:
+    """Split toneless *letters* into valid syllables, as (start, end) pairs.
+
+    Among all segmentations, the one with the fewest syllables wins, with two
+    constraints that make it unambiguous for well-formed pinyin: at most one
+    tone mark per syllable, and no syllable starting with a/o/e except at the
+    start of the word (pinyin writes an apostrophe there: fāng'àn, xī'ān).
+    Erhua (wánr) is a valid syllable followed by "r"."""
+    syllables = _pinyin_syllables()
+    lower = letters.lower()
+    n = len(lower)
+    best: List[Optional[List[tuple]]] = [None] * (n + 1)
+    best[0] = []
+    for end in range(1, n + 1):
+        for start in range(max(0, end - 7), end):
+            if best[start] is None:
+                continue
+            piece = lower[start:end]
+            erhua = len(piece) > 1 and piece.endswith("r") and piece[:-1] in syllables and piece != "er"
+            if piece not in syllables and not erhua:
+                continue
+            if start > 0 and piece[0] in "aoe":
+                continue
+            if sum(1 for t in tones[start:end] if t) > 1:
+                continue
+            candidate = best[start] + [(start, end)]
+            if best[end] is None or len(candidate) < len(best[end]):
+                best[end] = candidate
+    return best[n]
+
+
+def pinyin_to_numbered(pinyin: str) -> str:
+    """Rewrite tone-marked pinyin with tone numbers after each syllable.
+
+    "àihào" -> "ai4hao4", "bà ba" -> "ba4 ba5", "Xī'ān" -> "Xi1'an1",
+    "lǜsè" -> "lü4se4", "hǎo wánr" -> "hao3 wanr2". The neutral tone is 5
+    (as in CC-CEDICT). Spaces, apostrophes and hyphens are kept as they are.
+    Returns "" if some part can't be split into valid syllables.
+    """
+    pinyin = unicodedata.normalize("NFC", pinyin)
+    out = []
+    last = 0
+    for match in _LETTERS_RE.finditer(pinyin):
+        out.append(pinyin[last:match.start()])
+        letters, tones = _split_tones(match.group())
+        segments = _segment(letters, tones)
+        if segments is None:
+            return ""
+        for start, end in segments:
+            tone = max(tones[start:end])
+            out.append(letters[start:end] + str(tone or 5))
+        last = match.end()
+    out.append(pinyin[last:])
+    return "".join(out)
 
 
 @dataclass(slots=True)
@@ -154,16 +244,25 @@ def words_to_pinyin(
         `words_to_pinyin(words, char_sep="", word_sep=" ")`
         → `"ni shi wo de pengyou"`
     """
-    segments: List[str] = []
-
+    result = ""
+    glue_next = True  # no separator before the first segment
     for word in words:
         if word.is_chinese:
-            syllables = (char.pinyin for char in word.parts)  # type: ignore[arg-type]
-            segments.append(char_sep.join(syllables))
+            segment = char_sep.join(char.pinyin for char in word.parts)  # type: ignore[arg-type]
+        elif not word.raw.strip():
+            continue  # whitespace: word_sep already separates segments
         else:
-            segments.append(word.raw)
-
-    return word_sep.join(segments)
+            segment = word.raw
+        categories = {unicodedata.category(c) for c in segment}
+        is_punctuation = all(cat.startswith("P") for cat in categories)
+        opening = is_punctuation and categories <= {"Ps", "Pi"}
+        # Punctuation sticks to the previous word ("wǒ de。", not "wǒ de 。"),
+        # and opening brackets/quotes to the next one.
+        if not (glue_next or (is_punctuation and not opening)):
+            result += word_sep
+        result += segment
+        glue_next = opening
+    return result
 
 
 def words_to_colored_hanzi(

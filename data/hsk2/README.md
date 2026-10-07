@@ -1,21 +1,23 @@
-# HSK2 — vocabulario pendiente
+# HSK2 (HSK 3.0)
 
-Esta carpeta está preparada para el vocabulario de HSK2, pero todavía no
-contiene ningún `input.tsv`. Para completarla:
+- **Palabras:** 198 (solo las nuevas de este nivel), 200 caracteres distintos.
+- **Fuente:** lista oficial *New HSK Vocabulary Level 2*.
+- **Mazo:** [`decks/HSK2.apkg`](../../decks/HSK2.apkg), mazo `Chino - HSK2 (HSK 3.0)`, etiqueta `HSK2`.
+- **Sinónimos:** solo 14 de 198 palabras los tienen; pendiente de completar.
+- **Nivel en las tarjetas:** las respuestas muestran `HSK2` en la esquina superior izquierda.
+- **Nota:** 站 (*zhàn*) está aquí como sustantivo («estación, parada»), igual que en la lista oficial; el verbo («estar de pie») es de HSK3.
 
-1. Consigue la lista oficial de vocabulario de HSK2 (estándar 3.0).
-2. Genera un `input.tsv` con el mismo esquema que
-   [`data/hsk1/input.tsv`](../hsk1/input.tsv) (cabecera obligatoria:
-   `Simplified`, `Traditional`, `Pinyin`, `Meaning`, `SentenceSimplified`,
-   `SentenceMeaning`, `Synonyms`, `DictionarySimplified`,
-   `DictionaryMeaning`; columnas de traducción opcionales, p. ej. `MeaningES`
-   — ver el prompt de LLM en el [`README.md`](../../README.md) principal).
-3. Ejecuta:
-   ```bash
-   zhongwen-anki-build-hanzi-templates          # añade los caracteres nuevos de HSK2
-   zhongwen-anki -i data/hsk2/input.tsv -o data/hsk2/output.tsv
-   zhongwen-anki-build-deck -i data/hsk2/output.tsv -o decks/HSK2.apkg --level HSK2
-   ```
+## Ficheros
 
-`HSK2` ya tiene un ID de mazo reservado en `DECK_IDS` (`src/zhongwen_anki/build_deck.py`),
-así que no hace falta tocar código para generar este nivel.
+| Fichero | Qué es |
+|---|---|
+| `input.tsv` | Vocabulario fuente, con el esquema descrito en [`CONTRIBUTING.md`](../../CONTRIBUTING.md#añadir-vocabulario-o-un-nivel-nuevo). La columna `Guid` es el identificador permanente de cada nota en Anki: no la edites. |
+| `output.tsv` | Generado por `zhongwen-anki` (ignorado por git). |
+
+## Regenerar
+
+```bash
+zhongwen-anki-build-all --levels HSK2
+```
+
+Si cambias plantillas o CSS, regenera todos los niveles (`zhongwen-anki-build-all` sin argumentos): comparten el mismo tipo de nota.
