@@ -78,7 +78,7 @@ def test_export_modern_schema(tmp_path):
     assert row["deck"] == "Chino - HSK1 (3.0, 2026)"
     assert row["current_filtered_deck"] == ""
     assert row["word"] == "你好"
-    assert row["card_type"] == "Escribir Pinyin"
+    assert row["card_type"] == "H2P"
     assert row["tags"] == "HSK1 leech"
     assert row["ease_label"] == "Good"
     assert row["is_correct"] == "1"
@@ -139,7 +139,7 @@ def test_export_maps_card_ord_to_card_type(tmp_path):
     con.execute("CREATE TABLE cards (id INTEGER, nid INTEGER, did INTEGER, odid INTEGER, ord INTEGER)")
     con.execute("CREATE TABLE revlog (id INTEGER, cid INTEGER, ease INTEGER, ivl INTEGER, "
                  "lastIvl INTEGER, factor INTEGER, time INTEGER, type INTEGER)")
-    # One card per known template ordinal (0-3), plus one unknown ordinal (99)
+    # One card per original template ordinal (0-3), plus one unknown ordinal (99)
     # to check the fallback label instead of a crash.
     for i, ord_ in enumerate([0, 1, 2, 3, 99]):
         card_id, review_id = 200 + i, 1735689600000 + i
@@ -153,10 +153,10 @@ def test_export_maps_card_ord_to_card_type(tmp_path):
 
     rows = list(csv.DictReader(output.open(encoding="utf-8")))
     assert [row["card_type"] for row in rows] == [
-        "Hanzi -> Significado",
-        "Significado -> Hanzi",
-        "Escribir Pinyin",
-        "Escribir Hanzi",
+        "H2M",
+        "M2H",
+        "H2P",
+        "PM2H",
         "(ord 99)",
     ]
 

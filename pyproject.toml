@@ -4,17 +4,20 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "zhongwen-anki"
-version = "0.3.0"
-description = "Genera mazos de Anki (HSK1-3) para aprender vocabulario chino, con tarjetas de lectura, pinyin y escritura de trazos, en espanol e ingles."
+version = "0.4.0"
+description = "Genera mazos de Anki (HSK1-4, HSK 3.0) para aprender vocabulario chino, con tarjetas de lectura, pinyin y escritura de trazos, en espanol e ingles."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }
-authors = [{ name = "Thomas Hirtz", email = "thomashirtz@pm.me" }]
+authors = [
+    { name = "Thomas Hirtz", email = "thomashirtz@pm.me" },
+    { name = "Pablo Arcos" },
+]
 
 dependencies = [
     "jieba>=0.42",
     "pypinyin>=0.51",
-    "pandas>=2.0",
+    "pandas>=2.0,<3",
 ]
 
 [project.optional-dependencies]
@@ -26,7 +29,7 @@ test = ["genanki>=0.13", "pytest>=8.0", "matplotlib>=3.8"]
 za = "zhongwen_anki.__main__:main"
 zhongwen-anki = "zhongwen_anki.__main__:main"
 zhongwen-anki-build-deck = "zhongwen_anki.build_deck:main"
-zhongwen-anki-build-hanzi-templates = "zhongwen_anki.build_hanzi_templates:main"
+zhongwen-anki-build-all = "zhongwen_anki.build_all:main"
 zhongwen-anki-export-stats = "zhongwen_anki.export_stats:main"
 # WIP, not yet validated against real data -- see zhongwen_anki/wip/__init__.py.
 zhongwen-anki-analyze-stats = "zhongwen_anki.wip.analyze_stats:main"

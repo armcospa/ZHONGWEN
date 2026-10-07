@@ -1,0 +1,157 @@
+<div id="pinyinCheck" data-pinyin="{{Pinyin}}" data-numbered="{{PinyinNumbered}}" style="display:none"></div>
+
+<script>
+// Anki compares {{type:Pinyin}} letter by letter, so "ai4hao4" would be wrong
+// against "àihào". Re-grade the answer accepting tone marks or tone numbers
+// (ignoring case, spaces, apostrophes and hyphens), then show the correct
+// answer in the form the student used most: numbers if the answer has more
+// tone numbers than tone marks, tone marks otherwise (ties included).
+// If Anki's comparison isn't found, Anki's own result is left untouched.
+(function () {
+    var MARKS = {1: '\u0304', 2: '\u0301', 3: '\u030c', 4: '\u0300'};
+    var SEPARATORS = /[\s'’\-·]/;
+
+    // Every valid toneless pinyin syllable (same list as
+    // zhongwen_anki.utilities._pinyin_syllables, checked by the tests).
+    var SYLLABLE_LIST = 'a ai an ang ao ba bai ban bang bao bei ben beng bi bian biang biao bie bin bing bo bong bu ca cai can cang cao ce cei cen ceng cha chai chan chang chao che chen cheng chi chong chou chu chua chuai chuan chuang chui chun chuo ci cong cou cu cuan cui cun cuo da dai dan dang dao de dei den deng di dia dian diao die din ding diu dong dou du duan dui dun duo e ei en eng er fa fan fang fei fen feng fiao fo fou fu ga gai gan gang gao ge gei gen geng gong gou gu gua guai guan guang gui gun guo ha hai han hang hao he hei hen heng hm hng hong hou hu hua huai huan huang hui hun huo ji jia jian jiang jiao jie jin jing jiong jiu ju juan jue jun ka kai kan kang kao ke kei ken keng kong kou ku kua kuai kuan kuang kui kun kuo la lai lan lang lao le lei len leng li lia lian liang liao lie lin ling liu lo long lou lu luan lun luo lü lüe m ma mai man mang mao me mei men meng mi mian miao mie min ming miu mo mou mu n na nai nan nang nao ne nei nen neng ng ni nia nian niang niao nie nin ning niu nong nou nu nuan nun nuo nü nüe o ou pa pai pan pang pao pei pen peng pi pian piao pie pin ping po pou pu qi qia qian qiang qiao qie qin qing qiong qiu qu quan que qun ran rang rao re ren reng ri rong rou ru rua ruan rui run ruo sa sai san sang sao se sen seng sha shai shan shang shao she shei shen sheng shi shou shu shua shuai shuan shuang shui shun shuo si song sou su suan sui sun suo ta tai tan tang tao te tei teng ti tian tiao tie ting tong tou tu tuan tui tun tuo wa wai wan wang wei wen weng wo wong wu xi xia xian xiang xiao xie xin xing xiong xiu xu xuan xue xun ya yan yang yao ye yi yin ying yo yong you yu yuan yue yun za zai zan zang zao ze zei zen zeng zha zhai zhan zhang zhao zhe zhei zhen zheng zhi zhong zhou zhu zhua zhuai zhuan zhuang zhui zhun zhuo zi zong zou zu zuan zui zun zuo ê';
+    var SYLLABLES = {};
+    SYLLABLE_LIST.split(' ').forEach(function (s) { SYLLABLES[s] = true; });
+
+    // Split a run of toneless letters into valid syllables: fewest syllables,
+    // none starting with a/o/e except the first (pinyin writes an apostrophe
+    // there), erhua (wanr) allowed. null if it can't be split.
+    function splitSyllables(letters) {
+        var best = [[]];
+        for (var end = 1; end <= letters.length; end++) {
+            best[end] = null;
+            for (var start = Math.max(0, end - 7); start < end; start++) {
+                if (!best[start]) continue;
+                var piece = letters.slice(start, end);
+                var erhua = piece.length > 1 && piece !== 'er' && piece.slice(-1) === 'r' && SYLLABLES[piece.slice(0, -1)];
+                if (!SYLLABLES[piece] && !erhua) continue;
+                if (start > 0 && 'aoe'.indexOf(piece[0]) >= 0) continue;
+                if (!best[end] || best[start].length + 1 < best[end].length) best[end] = best[start].concat([piece]);
+            }
+        }
+        return best[letters.length];
+    }
+
+    // Tone mark position: a or e; o in "ou"; else the last of i/o/u/ü;
+    // n or m in syllables without vowels (ng, m, hm).
+    function markSyllable(syllable, tone) {
+        if (!MARKS[tone]) return syllable;
+        var i = syllable.indexOf('a');
+        if (i < 0) i = syllable.indexOf('e');
+        if (i < 0 && syllable.indexOf('ou') >= 0) i = syllable.indexOf('o');
+        for (var k = syllable.length - 1; i < 0 && k >= 0; k--) {
+            if ('iouü'.indexOf(syllable[k]) >= 0) i = k;
+        }
+        if (i < 0) i = syllable.search(/[nm]/);
+        if (i < 0) return syllable;
+        return (syllable.slice(0, i + 1) + MARKS[tone] + syllable.slice(i + 1)).normalize('NFC');
+    }
+
+    function canonical(text) {
+        return text.normalize('NFC').toLowerCase()
+            .replace(/u:/g, 'ü').replace(/v/g, 'ü')
+            // A number closes a syllable; letters before it without their own
+            // number are neutral-tone syllables (lai2deji2 = lái de jí).
+            .replace(/([a-zü]+)([0-5])/g, function (_, letters, tone) {
+                var syllables = splitSyllables(letters);
+                if (!syllables) return markSyllable(letters, +tone);
+                syllables[syllables.length - 1] = markSyllable(syllables[syllables.length - 1], +tone);
+                return syllables.join('');
+            })
+            .normalize('NFD')
+            .split('').filter(function (c) { return !SEPARATORS.test(c); }).join('');
+    }
+
+    // What the student typed, read back from Anki's comparison: the typed
+    // line (before the arrow) without the placeholders for missing letters.
+    // Without an arrow, the answer was either exactly right or empty.
+    function typedAnswer(code) {
+        var arrow = code.querySelector('#typearrow');
+        if (!arrow) {
+            var spans = code.querySelectorAll('span');
+            for (var i = 0; i < spans.length; i++) {
+                if (!spans[i].classList.contains('typeGood')) return '';
+            }
+            return spans.length ? code.textContent : '';
+        }
+        var typed = '';
+        for (var node = code.firstChild; node && node !== arrow; node = node.nextSibling) {
+            if (node.nodeType === 3) typed += node.textContent;
+            else if (node.nodeType === 1 && node.tagName !== 'BR' && !node.classList.contains('typeMissed')) typed += node.textContent;
+        }
+        return typed;
+    }
+
+    function escapeHtml(text) {
+        return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // Letter-by-letter highlighting like Anki's (longest common subsequence,
+    // case-insensitive); separators are shown but never count as errors.
+    function render(chars, matched, badClass) {
+        var html = '', current = null, buffer = '';
+        function flush() {
+            if (buffer) html += current ? '<span class=' + current + '>' + escapeHtml(buffer) + '</span>' : escapeHtml(buffer);
+            buffer = '';
+        }
+        chars.forEach(function (c, i) {
+            var cls = SEPARATORS.test(c) ? null : (matched[i] ? 'typeGood' : badClass);
+            if (cls !== current) { flush(); current = cls; }
+            buffer += c;
+        });
+        flush();
+        return html;
+    }
+
+    function diff(typed, expected) {
+        var a = Array.from(typed.normalize('NFC')), b = Array.from(expected.normalize('NFC'));
+        var ai = [], bi = [];
+        a.forEach(function (c, i) { if (!SEPARATORS.test(c)) ai.push(i); });
+        b.forEach(function (c, i) { if (!SEPARATORS.test(c)) bi.push(i); });
+        function same(i, j) { return a[ai[i]].toLowerCase() === b[bi[j]].toLowerCase(); }
+        var n = ai.length, m = bi.length, lcs = [];
+        for (var i = 0; i <= n; i++) lcs.push(new Array(m + 1).fill(0));
+        for (i = n - 1; i >= 0; i--) {
+            for (var j = m - 1; j >= 0; j--) {
+                lcs[i][j] = same(i, j) ? lcs[i + 1][j + 1] + 1 : Math.max(lcs[i + 1][j], lcs[i][j + 1]);
+            }
+        }
+        var okA = {}, okB = {};
+        i = 0; j = 0;
+        while (i < n && j < m) {
+            if (same(i, j)) { okA[ai[i]] = okB[bi[j]] = true; i++; j++; }
+            else if (lcs[i + 1][j] >= lcs[i][j + 1]) i++;
+            else j++;
+        }
+        return render(a, okA, 'typeBad') + '<br><span id=typearrow>&darr;</span><br>' + render(b, okB, 'typeMissed');
+    }
+
+    function check() {
+        var info = document.getElementById('pinyinCheck');
+        var code = document.getElementById('typeans');
+        if (!info || !code || code.tagName !== 'CODE') return;
+        var withMarks = info.getAttribute('data-pinyin');
+        var withNumbers = info.getAttribute('data-numbered');
+        var typed = typedAnswer(code).trim();
+
+        var markCount = (typed.normalize('NFD').match(/[\u0300\u0301\u0304\u030c]/g) || []).length;
+        var numberCount = (typed.match(/[0-5]/g) || []).length;
+        var expected = numberCount > markCount && withNumbers ? withNumbers : withMarks;
+
+        if (!typed) {
+            code.innerHTML = '<span class=typeMissed>' + escapeHtml(expected) + '</span>';
+        } else if (canonical(typed) === canonical(withMarks)) {
+            code.innerHTML = '<span class=typeGood>' + escapeHtml(expected) + '</span>';
+        } else {
+            code.innerHTML = diff(typed, expected);
+        }
+    }
+
+    window.zhongwenPinyin = {canonical: canonical, typedAnswer: typedAnswer, check: check};
+    check();
+})();
+</script>
