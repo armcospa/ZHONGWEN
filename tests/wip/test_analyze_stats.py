@@ -32,14 +32,14 @@ def _row(day, word, card_type, ease_label, is_correct, last_interval=5,
 def sample_csv(tmp_path):
     path = tmp_path / "reviews.csv"
     rows = []
-    # 你 is easy (mostly correct) on Hanzi -> Significado.
+    # 你 is easy (mostly correct) on H2M.
     for day in range(1, 6):
-        rows.append(_row(day, "你", "Hanzi -> Significado", "Good", 1, last_interval=day))
-    # 好 is hard (mostly wrong) on Escribir Pinyin -- a leech candidate.
+        rows.append(_row(day, "你", "H2M", "Good", 1, last_interval=day))
+    # 好 is hard (mostly wrong) on H2P -- a leech candidate.
     for day in range(1, 6):
-        rows.append(_row(day, "好", "Escribir Pinyin", "Again", 0, last_interval=day))
+        rows.append(_row(day, "好", "H2P", "Again", 0, last_interval=day))
     # A second HSK level, so the level breakdown has more than one row.
-    rows.append(_row(3, "了", "Hanzi -> Significado", "Good", 1, deck="Chino - HSK2 (HSK 3.0)"))
+    rows.append(_row(3, "了", "H2M", "Good", 1, deck="Chino - HSK2 (HSK 3.0)"))
     _write_csv(path, rows)
     return path
 
@@ -61,6 +61,15 @@ def test_load_fills_missing_card_type_for_old_exports(tmp_path):
     assert df["card_type"].tolist() == ["Desconocido"]
 
 
+def test_load_maps_legacy_card_type_names_to_codes(tmp_path):
+    """CSVs exported before the H/P/M codes use the old template names."""
+    path = tmp_path / "old.csv"
+    _write_csv(path, [_row(1, "你", "Escribir Hanzi", "Good", 1),
+                      _row(1, "好", "Significado -> Pinyin", "Again", 0)])
+    df = analyze_stats.load(path)
+    assert list(df["card_type"]) == ["PM2H", "M2P"]
+
+
 def test_overview_counts_reviews_and_accuracy(sample_csv):
     df = analyze_stats.load(sample_csv)
     ov = analyze_stats.overview(df)
@@ -78,9 +87,9 @@ def test_accuracy_by_card_type_flags_the_weaker_skill(sample_csv):
     df = analyze_stats.load(sample_csv)
     g = analyze_stats.accuracy_by(df, "card_type")
     worst = g.iloc[0]
-    assert worst["card_type"] == "Escribir Pinyin"
+    assert worst["card_type"] == "H2P"
     assert worst["accuracy"] == pytest.approx(0.0)
-    best = g[g["card_type"] == "Hanzi -> Significado"].iloc[0]
+    best = g[g["card_type"] == "H2M"].iloc[0]
     assert best["accuracy"] == pytest.approx(1.0)
 
 
