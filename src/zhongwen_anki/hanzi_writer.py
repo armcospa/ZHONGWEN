@@ -22,7 +22,7 @@ from typing import Iterable, List
 import pandas as pd
 
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent
-HANZI_WRITER_DIR = ROOT_DIR / "card_template" / "hanzi_writer"
+HANZI_WRITER_DIR = ROOT_DIR / "vendor" / "hanzi-writer"
 DATA_DIR = ROOT_DIR / "data"
 
 
