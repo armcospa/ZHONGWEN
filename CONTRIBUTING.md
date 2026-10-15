@@ -21,7 +21,7 @@ src/zhongwen_anki/
 ├── hanzi_writer.py    # bloque HanziWriter + datos de trazos, generado en memoria
 ├── utilities.py       # segmentación (jieba), pinyin (pypinyin) y coloreado por tono
 ├── export_stats.py    # zhongwen-anki-export-stats
-└── wip/analyze_stats.py   # zhongwen-anki-analyze-stats (en desarrollo)
+└── analyze_stats.py   # zhongwen-anki-analyze-stats
 card_template/
 ├── <código>/front.html, back.html   # una carpeta por tipo de tarjeta
 ├── _shared/                         # bloques comunes que se incluyen en las plantillas
@@ -51,7 +51,7 @@ data/hskN/input.tsv --zhongwen-anki--> data/hskN/output.tsv --zhongwen-anki-buil
 La especificación funcional (qué muestra y qué pide cada tarjeta) está en [`docs/tarjetas/README.md`](docs/tarjetas/README.md).
 
 - Cada tipo de tarjeta tiene su carpeta en `card_template/` con `front.html` y `back.html`. La lista ordenada de tipos está en `TEMPLATES` (`build_deck.py`).
-- **Solo se añaden tipos al final de `TEMPLATES`.** Anki identifica las tarjetas de una nota por su posición (`ord`): reordenar o insertar en medio haría que el historial de una tarjeta pasara a otra. Al añadir uno, actualiza también `CARD_TYPE_BY_ORD` (`export_stats.py`), `CARD_TYPE_DESCRIPTIONS` (`wip/analyze_stats.py`), `EXPECTED_TEMPLATE_NAMES` (`tests/test_build_deck.py`) y la documentación.
+- **Solo se añaden tipos al final de `TEMPLATES`.** Anki identifica las tarjetas de una nota por su posición (`ord`): reordenar o insertar en medio haría que el historial de una tarjeta pasara a otra. Al añadir uno, actualiza también `CARD_NAME_TO_CODE` y `CARD_TYPE_BY_ORD` (`export_stats.py`), `CARD_TYPE_DESCRIPTIONS` (`analyze_stats.py`), `EXPECTED_TEMPLATE_NAMES` (`tests/test_build_deck.py`) y la documentación.
 - Los bloques repetidos viven en `card_template/_shared/` y se incluyen con un comentario `<!-- include: nombre -->`, que `build_deck.py` sustituye al empaquetar:
 
 | Include | Contenido |
