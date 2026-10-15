@@ -53,14 +53,33 @@ HSK4 (997)**, cada nivel con solo sus palabras nuevas.
   (`collection.anki2` → `revlog`) a un CSV limpio para analizarlo fuera de Anki,
   incluyendo por qué tipo de tarjeta fue cada repaso (`card_type`: `H2M`,
   `M2H`, `H2P`, `PM2H` y el resto de códigos de tarjeta).
+  Soporta exportación incremental con `--since YYYY-MM-DD`, enriquecimiento
+  con datos del TSV usando `--vocab-dir data` (que añade pinyin, significado,
+  nivel, tradicional, etc. uniendo por GUID congelado), snapshots del estado
+  actual de las tarjetas con `--card-snapshot` (intervalo, facilidad, lapsos,
+  cola, fecha de vencimiento).
 - `zhongwen-anki-analyze-stats`: lee ese CSV y genera un informe HTML
   autocontenido (gráficos incrustados como PNG en base64, sin dependencias
-  externas ni conexión a internet) con precisión por tipo de tarjeta y por
-  nivel, tendencia de aciertos (media móvil de 7 días), retención por
-  intervalo desde el repaso anterior, precisión por día de la semana, y una
-  tabla de las palabras con peor ratio de aciertos (candidatas a repaso
-  dirigido). Requiere `pip install -e ".[analyze]"` (o `.[test]`, que ya lo
-  incluye).
+  externas ni conexión a internet) con:
+  - **Análisis general**: repasos totales, precisión global, racha actual y máxima,
+    tiempo medio, volumen (repasos/día).
+  - **Análisis profundo de fallos**: palabras más difíciles (peor ratio de
+    aciertos con mínimo de repasos), palabras con más fallos (Again),
+    distribución de dominio (N aciertos consecutivos en repasos programados),
+    últimos fallos (fecha, palabra y tipo), palabras que necesitan
+    atención (baja precisión + alto volumen de fallos).
+  - **Análisis lingüístico**: precisión por patrón de tono (tarjetas que
+    piden escribir pinyin), caracteres más difíciles de escribir
+    (tarjetas M2H, PM2H, P2H).
+  - **Tiempos de respuesta**: por tipo de tarjeta y por precisión
+    (aciertos vs fallos).
+  - **Recomendaciones personalizadas**: sugerencias accionables con prioridad
+    (alta/media/baja) basadas en los datos reales de estudio.
+  - **Gráficos**: precisión por tipo de tarjeta (con colores verde/naranja/rojo
+    según nivel), repasos diarios, tendencia de aciertos (media móvil 7 días),
+    retención por intervalo, precisión por día de la semana, distribución de
+    dominio, palabras más difíciles en ranking, tiempos de respuesta por tipo.
+  Requiere `pip install -e ".[analyze]"` (o `.[test]`, que ya lo incluye).
 - Todo corre en un entorno virtual local (`.venv/`), sin tocar el Python
   global. Instalación: `pip install -e ".[deck,test]"`.
 
@@ -127,13 +146,16 @@ AnkiMobile.
   es genérico; añadir HSK5 es cuestión de crear `data/hsk5/input.tsv` con el
   mismo esquema, añadir una entrada en `DECK_IDS` dentro de `build_deck.py` y
   ejecutar `zhongwen-anki-build-all` (ver `CONTRIBUTING.md`).
-- **Análisis de tu propio aprendizaje**: `export_stats.py` (estable) da acceso
-  a cada repaso individual (acierto/fallo, tipo de tarjeta de entre las 10,
-  tiempo empleado, facilidad, intervalo). `analyze_stats.py` (🚧 WIP, ver
-  §1.2) convierte eso en un informe HTML: qué palabras cuestan más, cómo
-  evoluciona tu ritmo de aciertos, si fallas más en pinyin que en escritura,
-  en qué días de la semana rindes mejor, y si Anki te está espaciando los
-  repasos demasiado agresivo (precisión que cae en los intervalos largos).
+- **Análisis profundo de tu propio aprendizaje**: `export_stats.py` (estable)
+  da acceso a cada repaso individual (acierto/fallo, tipo de tarjeta de entre
+  las 10, tiempo empleado, facilidad, intervalo) con soporte para exportación
+  incremental (`--since`), enriquecimiento con datos del TSV (`--vocab-dir`),
+  snapshots del estado actual (`--card-snapshot`). `analyze_stats.py` convierte eso en un informe HTML exhaustivo:
+  qué palabras cuestan más, distribución de dominio (N aciertos consecutivos
+  en repasos programados), últimos fallos (fecha, palabra y tipo), análisis
+  lingüístico (qué patrones de tono o caracteres te cuestan más), tiempos
+  de respuesta por tipo de tarjeta, y recomendaciones personalizadas de
+  estudio con prioridad (alta/media/baja).
 - **Practicar habilidades por separado sin perder el hilo**: mazos filtrados
   por tipo de tarjeta, por etiqueta (`tag:HSK1`), o por "leeches" (palabras
   que fallas repetidamente — Anki las etiqueta solas).
@@ -198,18 +220,42 @@ Anki no tiene un botón nativo de "exportar CSV" en la pantalla de Stats, pero *
    revlog.to_csv("mis_repasos.csv", index=False)
    ```
    La tabla `revlog` tiene **una fila por cada repaso que has hecho** (timestamp, si acertaste/fallaste, tiempo empleado, intervalo, etc.) — es la fuente de datos más completa que hay, mejor que cualquier export de la interfaz.
-4. Alternativa ya hecha en este repo: `zhongwen-anki-export-stats` hace exactamente esto (con detección automática del perfil, nombres de columna legibles y filtro opcional por mazo), y `zhongwen-anki-analyze-stats` convierte ese CSV en un informe HTML con gráficos. Ver sección 1.2 más arriba.
+4. Alternativa ya hecha en este repo: `zhongwen-anki-export-stats` hace exactamente esto (con detección automática del perfil, nombres de columna legibles y filtro opcional por mazo), y `zhongwen-anki-analyze-stats` convierte ese CSV en un informe HTML exhaustivo con gráficos. Ver sección 1.2 más arriba.
+
+   Opciones adicionales de exportación:
+   - `--since YYYY-MM-DD`: solo repasos desde esa fecha (exportación incremental; genera un archivo parcial a menos que se use con `--append`).
+   - `--append`: añade solo los repasos nuevos al CSV existente, sin duplicar filas.
+   - `--vocab-dir data`: enriquece el CSV con datos del TSV (pinyin, significado, nivel...).
+   - `--card-snapshot`: exporta también el estado actual de cada tarjeta a `<salida>.cards.csv` (se pasa a `analyze_stats` con `--cards`).
 
 ### 3.5 Flujo si estudias sobre todo en AnkiDroid
 
 Ambos comandos leen `collection.anki2`, que vive en el ordenador con Anki
-Desktop -- no en el móvil. El flujo recomendado si la mayoría de tu estudio es
-en AnkiDroid:
+Desktop -- no en el móvil. Hay dos opciones si la mayoría de tu estudio es en
+AnkiDroid (package `com.ichi2.anki`):
+
+#### Opción A: Sincronización vía AnkiWeb (recomendada)
 
 1. En AnkiDroid: sincroniza (icono de sincronización) para subir tus repasos a AnkiWeb.
 2. En el ordenador con Anki Desktop: sincroniza también (mismo icono, o `Y`), para bajar esos repasos al `collection.anki2` local.
-3. `zhongwen-anki-export-stats` (regenera `docs/local/estadisticas/anki_reviews.csv` con todo lo nuevo).
-4. `zhongwen-anki-analyze-stats` (regenera `docs/local/estadisticas/report.html`).
+3. `zhongwen-anki-export-stats` (regenera el CSV con todo el historial).
+4. `zhongwen-anki-analyze-stats` (regenera el informe HTML).
+
+Para exportaciones incrementales (añadir solo lo nuevo al CSV sin duplicar),
+usa `--append`: `zhongwen-anki-export-stats --append`.
+
+#### Opción B: Exportar `.colpkg` directamente desde AnkiDroid
+
+Si prefieres evitar AnkiWeb o no tienes Anki Desktop, puedes exportar la
+colección directamente desde AnkiDroid:
+
+1. En AnkiDroid: abre la lista de mazos → menú ⋮ → **Exportar colección** → *Paquete de colección Anki (.colpkg)*.
+2. Transfiere el archivo `.colpkg` al ordenador (USB, email, nube...).
+3. Usa el `.colpkg` como colección:
+   ```bash
+   zhongwen-anki-export-stats --collection mi_coleccion.colpkg -o reviews.csv
+   ```
+   También sirven los backups automáticos de Anki Desktop (`%APPDATA%\Anki2\<perfil>\backups\*.colpkg`).
 
 Como los repasos se acumulan (nunca se borran salvo que hagas `Forget`), es
 seguro repetir este flujo cuando quieras -- cada vez parte del historial

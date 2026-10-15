@@ -153,7 +153,7 @@ zhongwen-anki-build-all      # regenera data/*/output.tsv y decks/*.apkg
 | `zhongwen-anki` | Enriquece un `input.tsv`: pinyin de frases y definiciones, coloreado por tono |
 | `zhongwen-anki-build-deck` | Empaqueta un `output.tsv` en un `.apkg` |
 | `zhongwen-anki-export-stats` | Exporta tu historial de repasos de Anki a CSV |
-| `zhongwen-anki-analyze-stats` | 🚧 Genera un informe HTML a partir de ese CSV |
+| `zhongwen-anki-analyze-stats` | Genera un informe HTML detallado a partir de ese CSV |
 
 Cómo funciona el pipeline, cómo añadir vocabulario o un nivel (con el prompt para el LLM), cómo adaptarlo a otro idioma y cómo están organizadas las plantillas: [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
@@ -164,9 +164,9 @@ zhongwen-anki-export-stats --deck "HSK1" -o docs/local/estadisticas/anki_reviews
 zhongwen-anki-analyze-stats -i docs/local/estadisticas/anki_reviews.csv -o docs/local/estadisticas/report.html
 ```
 
-El primero exporta cada repaso (acierto o fallo, tipo de tarjeta, etiquetas, tiempo, intervalo) desde el `collection.anki2` local. El segundo genera un informe HTML autocontenido con la precisión por tipo de tarjeta y por nivel, la tendencia de aciertos, la retención por intervalo, la precisión por día de la semana y las palabras más difíciles. **Es trabajo en curso**: está probado con datos sintéticos, pero todavía no con un historial real largo.
+El primero exporta cada repaso (acierto o fallo, tipo de tarjeta, etiquetas, tiempo, intervalo) desde el `collection.anki2` local. Admite `--since` (solo repasos desde una fecha; genera un archivo parcial), enriquecimiento con los datos del TSV usando `--vocab-dir data`, snapshots del estado actual de las tarjetas (`--card-snapshot`) y `--append` (añade solo los repasos nuevos al CSV existente). El segundo genera un informe HTML autocontenido con: análisis general (repasos totales, precisión global, racha actual y máxima, tiempo medio), precisión por tipo de tarjeta y por nivel, tendencia de aciertos, retención por intervalo, precisión por día de la semana, distribución de dominio, las palabras más difíciles, las que más veces se fallan (con los últimos fallos: fecha, palabra y tipo), análisis lingüístico (patrones de tono, caracteres más difíciles de escribir), tiempos de respuesta por tipo de tarjeta y por precisión, y recomendaciones personalizadas de estudio.
 
-Si estudias sobre todo en AnkiDroid, sincroniza AnkiDroid → AnkiWeb → Anki Desktop antes de exportar. Más detalle en [`docs/FUNCIONALIDADES.md`](docs/FUNCIONALIDADES.md).
+Si estudias sobre todo en AnkiDroid, hay dos opciones: (1) sincroniza AnkiDroid → AnkiWeb → Anki Desktop y exporta desde el desktop, o (2) exporta un `.colpkg` directamente desde AnkiDroid (lista de mazos → menú ⋮ → **Exportar colección** → *Paquete de colección Anki (.colpkg)*) y pásalo a `--collection`. También sirven los backups automáticos de Anki Desktop (`%APPDATA%\Anki2\<perfil>\backups\*.colpkg`). Más detalle en [`docs/FUNCIONALIDADES.md`](docs/FUNCIONALIDADES.md).
 
 ## Créditos y licencia
 

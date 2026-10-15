@@ -22,8 +22,8 @@ dependencies = [
 
 [project.optional-dependencies]
 deck = ["genanki>=0.13"]
-analyze = ["matplotlib>=3.8"]
-test = ["genanki>=0.13", "pytest>=8.0", "matplotlib>=3.8"]
+analyze = ["matplotlib>=3.8", "zstandard>=0.22"]
+test = ["genanki>=0.13", "pytest>=8.0", "matplotlib>=3.8", "zstandard>=0.22"]
 
 [project.scripts]
 za = "zhongwen_anki.__main__:main"
@@ -31,8 +31,7 @@ zhongwen-anki = "zhongwen_anki.__main__:main"
 zhongwen-anki-build-deck = "zhongwen_anki.build_deck:main"
 zhongwen-anki-build-all = "zhongwen_anki.build_all:main"
 zhongwen-anki-export-stats = "zhongwen_anki.export_stats:main"
-# WIP, not yet validated against real data -- see zhongwen_anki/wip/__init__.py.
-zhongwen-anki-analyze-stats = "zhongwen_anki.wip.analyze_stats:main"
+zhongwen-anki-analyze-stats = "zhongwen_anki.analyze_stats:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
